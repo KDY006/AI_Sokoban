@@ -1,7 +1,12 @@
+"""
+Module: core/state.py
+Phụ trách: Duy (Leader - Core Architecture)
+Mô tả: Định nghĩa State bất biến (hashable) và hàm đọc file bản đồ Sokoban.
+"""
+
 from typing import Tuple, FrozenSet, Set
 
-# Hướng di chuyển tương ứng theo hệ trục ma trận (row, col)
-# Trục y đi xuống (row tăng), trục x đi sang phải (col tăng)
+# 4 hướng di chuyển cơ bản theo đề bài (North, South, West, East)
 ACTIONS = {
     'North': (-1, 0),
     'South': (1, 0),
@@ -13,7 +18,7 @@ ACTIONS = {
 class State:
     """
     Biểu diễn trạng thái bất biến của trò chơi Sokoban.
-    Được thiết kế để dùng làm key trong dictionary hoặc lưu trong set.
+    Bao gồm tọa độ Agent và tập hợp tọa độ các Hộp.
     """
     def __init__(self, player_pos: Tuple[int, int], boxes_pos: FrozenSet[Tuple[int, int]]):
         self.player_pos: Tuple[int, int] = player_pos
@@ -28,18 +33,13 @@ class State:
     def __hash__(self) -> int:
         return self._hash
 
-    def __lt__(self, other) -> bool:
-        # Hỗ trợ so sánh khi heapq có cost bằng nhau
-        return (self.player_pos, sorted(list(self.boxes_pos))) < (other.player_pos, sorted(list(other.boxes_pos)))
-
     def __repr__(self) -> str:
         return f"State(Agent={self.player_pos}, Boxes={set(self.boxes_pos)})"
 
 
 def parse_map(file_path: str) -> Tuple[State, FrozenSet[Tuple[int, int]], FrozenSet[Tuple[int, int]], int, int]:
     """
-    Đọc file bản đồ Sokoban từ đường dẫn file_path.
-    Quy ước ký tự đề bài:
+    Đọc file bản đồ Sokoban theo đúng quy ước ký tự đề bài:
         % : Tường (wall)
         A : Vị trí ban đầu của Agent
         B : Hộp (box)
@@ -75,7 +75,7 @@ def parse_map(file_path: str) -> Tuple[State, FrozenSet[Tuple[int, int]], Frozen
                 goals.add(coord)
 
     if agent_pos is None:
-        raise ValueError("Lỗi cấu hình map: Không tìm thấy vị trí Agent ('A')!")
+        raise ValueError("Lỗi: Không tìm thấy vị trí Agent ('A') trên bản đồ!")
 
     initial_state = State(player_pos=agent_pos, boxes_pos=frozenset(boxes))
     return initial_state, frozenset(walls), frozenset(goals), max_row, max_col
