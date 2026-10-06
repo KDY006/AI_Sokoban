@@ -33,7 +33,8 @@ class SokobanView:
         for elem in elements:
             path = os.path.join(assets_dir, f"{elem}.png")
             if os.path.exists(path):
-                img = pygame.image.load(path).convert_alpha()
+                # Bỏ convert_alpha() để không bị lỗi màn hình chưa bật
+                img = pygame.image.load(path)
                 self.sprites[elem] = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
             else:
                 self.sprites[elem] = None

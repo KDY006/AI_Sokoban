@@ -1,0 +1,2 @@
+# Phien ban pygame tuong thich tot tren ca Windows va macOS Ventura / Intel
+pygame==2.6.1
