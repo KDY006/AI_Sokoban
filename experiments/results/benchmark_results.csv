@@ -1,0 +1,5 @@
+Map,Boxes,Cost_UCS,Cost_AStar,Optimal_Match,UCS_Nodes,AStar_Nodes,Node_Reduction_Ratio,UCS_Peak_Frontier,AStar_Peak_Frontier,UCS_Time_ms,AStar_Time_ms,Speedup
+example_map.txt,7,34,34,True,494986,8478,58.38,112480,2073,4832.08,271.57,17.79
+map_02_two_boxes.txt,2,7,7,True,327,33,9.91,243,40,1.97,1.14,1.73
+map_03_three_boxes.txt,3,14,14,True,36164,878,41.19,16890,852,462.09,28.93,15.97
+map_04_four_boxes.txt,4,23,23,True,2789819,22606,123.41,632276,20310,34661.93,583.36,59.42
