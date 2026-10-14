@@ -7,6 +7,17 @@ from gui.constants import (
 )
 
 class SokobanView:
+    """
+    Game Engine & Pygame Visualization.
+    Quy uoc ky hieu ban do theo dung de bai:
+      '%' : Wall / Obstacles
+      'A' : Player 1 (the man)
+      'P' : Player 2 (Che do doi khang 2 Agent)
+      'B' : Box (Thung)
+      'D' : Goal (Diem dich dat thung - cham do)
+      'C' : Box on Goal (Thung da nam tren diem dich - mau nau dam)
+      ' ' : Blank cell (San nha)
+    """
     def __init__(self, title="AI Sokoban Visualization"):
         pygame.init()
         pygame.font.init()
@@ -25,22 +36,25 @@ class SokobanView:
         self.grid_height = 0
         self.panel_height = 80
         self.sprites = {}
-        self._load_sprites()
 
     def _load_sprites(self):
+        """Load anh tu assets neu co."""
         assets_dir = os.path.join(os.path.dirname(__file__), "assets")
-        elements = ["player", "box", "target", "wall", "floor"]
+        elements = ["player", "player2", "box", "box_docked", "target", "wall", "floor"]
         for elem in elements:
             path = os.path.join(assets_dir, f"{elem}.png")
             if os.path.exists(path):
-                # Bỏ convert_alpha() để không bị lỗi màn hình chưa bật
-                img = pygame.image.load(path)
-                self.sprites[elem] = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
+                try:
+                    img = pygame.image.load(path)
+                    self.sprites[elem] = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
+                except Exception:
+                    self.sprites[elem] = None
             else:
                 self.sprites[elem] = None
 
     def load_map_from_file(self, file_path):
         if not os.path.exists(file_path):
+            print(f"Khong tim thay file ban do: {file_path}")
             return []
         with open(file_path, "r", encoding="utf-8") as f:
             lines = [line.rstrip("\r\n") for line in f.readlines() if line.strip()]
@@ -58,54 +72,78 @@ class SokobanView:
         self.grid_height = len(grid)
         self.grid_width = len(grid[0]) if self.grid_height > 0 else 0
         
-        screen_w = max(self.grid_width * TILE_SIZE, 600)
+        screen_w = max(self.grid_width * TILE_SIZE, 640)
         screen_h = self.grid_height * TILE_SIZE + self.panel_height
         self.screen = pygame.display.set_mode((screen_w, screen_h))
         pygame.display.set_caption(self.title)
+        
+        # Load sprite sau khi da co display surface
+        self._load_sprites()
 
     def draw_cell(self, char, x, y):
         rect = pygame.Rect(x, y, TILE_SIZE, TILE_SIZE)
         
-        # 1. Vẽ sàn nhà mặc định
+        # 1. Ve san nha (Blank cells)
         if self.sprites.get("floor"):
             self.screen.blit(self.sprites["floor"], (x, y))
         else:
             pygame.draw.rect(self.screen, (40, 44, 52), rect)
             pygame.draw.rect(self.screen, (55, 60, 70), rect, 1)
 
-        # 2. Tường: Ký tự '%' hoặc '#'
-        if char in ["%", "#"]:
+        # 2. Tuong (Walls / Obstacles): Ky tu '%'
+        if char == "%":
             if self.sprites.get("wall"):
                 self.screen.blit(self.sprites["wall"], (x, y))
             else:
-                pygame.draw.rect(self.screen, (100, 100, 100), rect)
-                
-        # 3. Điểm đích: Ký tự 'D' hoặc '.'
-        elif char in ["D", "."]:
+                pygame.draw.rect(self.screen, (90, 95, 105), rect)
+                pygame.draw.rect(self.screen, (40, 44, 52), rect, 3)
+
+        # 3. Diem dich (Designated positions of boxes - red points): Ky tu 'D'
+        elif char == "D":
             if self.sprites.get("target"):
                 self.screen.blit(self.sprites["target"], (x, y))
             else:
                 pygame.draw.circle(self.screen, (220, 20, 60), rect.center, TILE_SIZE // 4)
-                
-        # 4. Thùng/Hộp: Ký tự 'C' hoặc '$'
-        elif char in ["C", "$"]:
+                pygame.draw.circle(self.screen, (255, 100, 100), rect.center, TILE_SIZE // 7)
+
+        # 4. Thung (Boxes): Ky tu 'B'
+        elif char == "B":
             if self.sprites.get("box"):
                 self.screen.blit(self.sprites["box"], (x, y))
             else:
-                pygame.draw.rect(self.screen, (205, 133, 63), rect.inflate(-16, -16), border_radius=6)
-                
-        # 5. Người chơi 1: Ký tự 'A' hoặc '@'
-        elif char in ["A", "@"]:
+                box_rect = rect.inflate(-14, -14)
+                pygame.draw.rect(self.screen, (210, 140, 70), box_rect, border_radius=6)
+                pygame.draw.rect(self.screen, (150, 80, 30), box_rect, 3, border_radius=6)
+                pygame.draw.line(self.screen, (150, 80, 30), box_rect.topleft, box_rect.bottomright, 2)
+                pygame.draw.line(self.screen, (150, 80, 30), box_rect.bottomleft, box_rect.topright, 2)
+
+        # 5. Thung da nam tren dich (Box on Goal - dark brown boxes): Ky tu 'C'
+        elif char == "C":
+            if self.sprites.get("box_docked"):
+                self.screen.blit(self.sprites["box_docked"], (x, y))
+            else:
+                box_rect = rect.inflate(-14, -14)
+                pygame.draw.rect(self.screen, (110, 55, 25), box_rect, border_radius=6)
+                pygame.draw.rect(self.screen, (220, 20, 60), box_rect, 3, border_radius=6)
+                pygame.draw.circle(self.screen, (220, 20, 60), box_rect.center, 6)
+
+        # 6. Nguoi choi 1 (Player 1 / the man): Ky tu 'A'
+        elif char == "A":
             if self.sprites.get("player"):
                 self.screen.blit(self.sprites["player"], (x, y))
             else:
-                # Vẽ hình tròn xanh dương cho Player 1
                 pygame.draw.circle(self.screen, (30, 144, 255), rect.center, TILE_SIZE // 3)
-                
-        # 6. Người chơi 2 (Dành cho chế độ đối kháng Competitive Two-Agent): Ký tự 'B'
-        elif char == "B":
-            # Vẽ hình tròn màu cam/vàng cho Player 2
-            pygame.draw.circle(self.screen, (255, 140, 0), rect.center, TILE_SIZE // 3)
+                pygame.draw.circle(self.screen, (255, 255, 255), (rect.centerx - 6, rect.centery - 4), 4)
+                pygame.draw.circle(self.screen, (255, 255, 255), (rect.centerx + 6, rect.centery - 4), 4)
+
+        # 7. Nguoi choi 2 o che do doi khang (Player 2): Ky tu 'P'
+        elif char == "P":
+            if self.sprites.get("player2"):
+                self.screen.blit(self.sprites["player2"], (x, y))
+            else:
+                pygame.draw.circle(self.screen, (255, 140, 0), rect.center, TILE_SIZE // 3)
+                pygame.draw.circle(self.screen, (255, 255, 255), (rect.centerx - 6, rect.centery - 4), 4)
+                pygame.draw.circle(self.screen, (255, 255, 255), (rect.centerx + 6, rect.centery - 4), 4)
 
     def draw_panel(self):
         screen_w = self.screen.get_width()
