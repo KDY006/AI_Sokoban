@@ -9,13 +9,13 @@ from gui.constants import (
 class SokobanView:
     """
     Game Engine & Pygame Visualization.
-    Quy uoc ky hieu ban do theo dung de bai:
+    Quy uoc ky hieu ban do theo de bai:
       '%' : Wall / Obstacles
       'A' : Player 1 (the man)
       'P' : Player 2 (Che do doi khang 2 Agent)
       'B' : Box (Thung)
-      'D' : Goal (Diem dich dat thung - cham do)
-      'C' : Box on Goal (Thung da nam tren diem dich - mau nau dam)
+      'D' : Goal (Diem dich dat thung)
+      'C' : Box on Goal (Thung da nam tren diem dich)
       ' ' : Blank cell (San nha)
     """
     def __init__(self, title="AI Sokoban Visualization"):
@@ -31,14 +31,14 @@ class SokobanView:
         self.is_paused = True
         self.running = False
         self.algorithm_name = "UCS"  # Mac dinh: UCS hoac A*
-        self.mode = "single"  # "single" (R5) hoac "competitive" (R8)
+        self.mode = "single"  # "single" hoac "competitive"
         self.history_scores = []  # Luu lich su diem [p1_score, p2_score] theo tung buoc
         self.max_steps = 0  # So buoc n nguoi dung nhap
 
         self.screen = None
         self.grid_width = 0
         self.grid_height = 0
-        self.panel_height = 95  # Tang nhe do cao panel de thoang chu
+        self.panel_height = 95
         self.sprites = {}
 
     def _load_sprites(self):
@@ -74,7 +74,7 @@ class SokobanView:
             self._setup_screen(states[0])
             
     def set_competitive_history(self, states, scores, max_steps):
-        """Nhan chuoi trang thai va diem so cho che do doi khang 2 Agent (R8)."""
+        """Nhan chuoi trang thai va diem so cho che do doi khang 2 Agent."""
         self.mode = "competitive"
         self.history_states = states
         self.history_scores = scores
@@ -106,28 +106,28 @@ class SokobanView:
             pygame.draw.rect(self.screen, (40, 44, 52), rect)
             pygame.draw.rect(self.screen, (55, 60, 70), rect, 1)
 
-        # 2. Tuong (Walls / Obstacles): Ky tu '%'
+        # 2. Tuong: Ky tu '%'
         if char == "%":
             if self.sprites.get("wall"):
                 self.screen.blit(self.sprites["wall"], (x, y))
             else:
                 pygame.draw.rect(self.screen, (90, 95, 105), rect)
 
-        # 3. Diem dich (Designated positions of boxes - red points): Ky tu 'D'
+        # 3. Diem dich: Ky tu 'D'
         elif char == "D":
             if self.sprites.get("target"):
                 self.screen.blit(self.sprites["target"], (x, y))
             else:
                 pygame.draw.circle(self.screen, (220, 20, 60), rect.center, TILE_SIZE // 4)
 
-        # 4. Thung (Boxes): Ky tu 'B'
+        # 4. Thung: Ky tu 'B'
         elif char == "B":
             if self.sprites.get("box"):
                 self.screen.blit(self.sprites["box"], (x, y))
             else:
                 pygame.draw.rect(self.screen, (205, 133, 63), rect.inflate(-16, -16), border_radius=6)
 
-        # 5. Thung da nam tren dich (Box on Goal - dark brown boxes): Ky tu 'C'
+        # 5. Thung da nam tren dich: Ky tu 'C'
         elif char == "C":
             if self.sprites.get("box_docked"):
                 self.screen.blit(self.sprites["box_docked"], (x, y))
@@ -145,21 +145,21 @@ class SokobanView:
             else:
                 pygame.draw.circle(self.screen, (30, 144, 255), rect.center, TILE_SIZE // 3)
 
-        # 7. Nguoi choi 1 (Player 1 / the man): Ky tu 'A'
+        # 7. Nguoi choi 1: Ky tu 'A'
         elif char == "A":
             if self.sprites.get("player"):
                 self.screen.blit(self.sprites["player"], (x, y))
             else:
                 pygame.draw.circle(self.screen, (30, 144, 255), rect.center, TILE_SIZE // 3)
                 
-        # 8. Nguoi choi 2 o che do doi khang (Player 2): Ky tu 'P'
+        # 8. Nguoi choi 2 o che do doi khang: Ky tu 'P'
         elif char == "P":
             if self.sprites.get("player2"):
                 self.screen.blit(self.sprites["player2"], (x, y))
             else:
                 pygame.draw.circle(self.screen, (255, 140, 0), rect.center, TILE_SIZE // 3)
                 
-        # Thung tren dich boi Player 2: Ky tu 'K'
+        # 9. Thung tren dich boi Player 2: Ky tu 'K'
         elif char == "K":
             if self.sprites.get("box_p2"):
                 self.screen.blit(self.sprites["box_p2"], (x, y))
@@ -189,7 +189,7 @@ class SokobanView:
         total_steps = max(0, len(self.history_states) - 1)
 
         if self.mode == "competitive":
-            # --- CHE DO DOI KHANG 2 AGENT (R8) ---
+            # --- CHE DO DOI KHANG 2 AGENT---
             p1_score = 0
             p2_score = 0
             if (
@@ -259,7 +259,7 @@ class SokobanView:
             )
 
         else:
-            # --- CHE DO DON (R5) ---
+            # --- CHE DO DON ---
             algo_surf = self.font.render(
                 f"Thuat toan: {self.algorithm_name}", True, (255, 215, 0)
             )
