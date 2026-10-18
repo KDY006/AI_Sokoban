@@ -24,7 +24,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.state import parse_map
 from core.problem import SokobanProblem
-from search.astar import astar_search, SokobanHeuristic
+from search.astar import astar_search
+from search.heuristic import SokobanHeuristic
 
 
 def verify_heuristic_on_map(map_file: str, max_transitions_to_test: int = 2000) -> Dict:

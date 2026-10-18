@@ -78,12 +78,38 @@ python test_gui.py
 
 ---
 
-### Cách 2: Chạy chế độ Đơn (Single-Agent)
+### Cách 2: Chạy chế độ Đơn (Single-Agent - R5)
+Chạy chương trình chính cho chế độ đơn tác nhân:
 
+```bash
+python main_single.py
+```
+
+* Chương trình sẽ hiển thị menu tương tác để bạn chọn bản đồ (`maps/example_map.txt`, `maps/map_02_two_boxes.txt`, ...) và chọn thuật toán (`1. UCS` hoặc `2. A*`).
+* Sau khi giải xong, bảng thống kê hiệu năng (chi phí, số node mở rộng, thời gian thực thi ms) sẽ hiển thị trên console và cửa sổ Pygame sẽ tự động mở để minh họa trực quan lời giải.
+* Bạn cũng có thể truyền tham số dòng lệnh trực tiếp:
+  ```bash
+  python main_single.py --map maps/map_02_two_boxes.txt --algo astar
+  python main_single.py --map maps/example_map.txt --algo ucs
+  ```
 
 ---
 
-### Cách 3: Chạy chế độ Đối kháng (Competitive)
+### Cách 3: Chạy chế độ Đối kháng 2 Agent (Competitive - R6, R7, R8)
+Chạy trận thi đấu đối kháng giữa 2 tác nhân AI:
+
+```bash
+python main_competitive.py
+```
+
+* Bạn sẽ được yêu cầu nhập số lượt tối đa $n$ từ bàn phím (mặc định: 50 lượt) và chọn bản đồ thi đấu (`maps/competitive_map.txt`).
+* Trong suốt trận đấu, nếu xảy ra xung đột (hai agent cùng đi vào một vị trí hoặc cùng đẩy một hộp), cơ chế xác suất $p \sim \text{Uniform}(0, 1)$ ($p < 0.5$: P1 đi, ngược lại P2 đi) sẽ được kích hoạt và in chi tiết log ra console.
+* Cửa sổ Pygame sẽ mở ra diễn hoạt trực quan toàn bộ trận đấu, hiển thị bảng điểm thời gian thực và công bố bên chiến thắng.
+* Bạn cũng có thể chỉ định số bước qua tham số dòng lệnh:
+  ```bash
+  python main_competitive.py --steps 50
+  python main_competitive.py -n 100 --map maps/competitive_map.txt
+  ```
 
 
 ---
