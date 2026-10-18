@@ -42,7 +42,7 @@ def run_benchmark(map_files=None):
         candidate_files = []
         if os.path.exists(maps_dir):
             for fname in sorted(os.listdir(maps_dir)):
-                if fname.endswith('.txt'):
+                if fname.endswith('.txt') and not fname.startswith('competitive'):
                     fpath = os.path.join(maps_dir, fname)
                     if os.path.getsize(fpath) > 0:
                         candidate_files.append(fpath)
