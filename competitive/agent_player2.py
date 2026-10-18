@@ -1,5 +1,4 @@
 from collections import deque
-import heapq
 import threading
 
 
@@ -7,36 +6,7 @@ class agent_player2:
 
     def __init__(self):
         self.name = "Player 2"
-        self.time_limit = 0.75  
-
-    def bfs_distance(self, grid, start_pos, target_pos):
-        if start_pos is None or target_pos is None:
-            return float("inf")
-
-        queue = deque([(start_pos, 0)])
-        visited = set([start_pos])
-
-        while queue:
-            curr_pos, dist = queue.popleft()
-
-            if curr_pos == target_pos:
-                return dist
-
-            r, c = curr_pos
-            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                nr, nc = r + dr, c + dc
-
-                if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]):
-                    if grid[nr][nc] != "%" and (nr, nc) not in visited:
-                        visited.add((nr, nc))
-                        queue.append(((nr, nc), dist + 1))
-
-        return float("inf")
-
-    def heuristic(self, grid, my_pos, box_pos, goal_pos):
-        dist_agent_to_box = self.bfs_distance(grid, my_pos, box_pos)
-        dist_box_to_goal = self.bfs_distance(grid, box_pos, goal_pos)
-        return dist_agent_to_box + dist_box_to_goal
+        self.time_limit = 0.85
 
     def get_next_position(self, pos, act):
         if pos is None:
@@ -52,12 +22,38 @@ class agent_player2:
             return (r, c + 1)
         return (r, c)
 
+    def bfs_path(self, grid, start_pos, target_pos, obstacles):
+        if start_pos == target_pos:
+            return []
+
+        queue = deque([(start_pos, [])])
+        visited = set([start_pos])
+
+        while queue:
+            curr, path = queue.popleft()
+            if curr == target_pos:
+                return path
+
+            for act in ["North", "South", "West", "East"]:
+                nxt = self.get_next_position(curr, act)
+                nr, nc = nxt
+                if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]):
+                    if (
+                        grid[nr][nc] != "%"
+                        and nxt not in obstacles
+                        and nxt not in visited
+                    ):
+                        visited.add(nxt)
+                        queue.append((nxt, path + [act]))
+
+        return None
+
     def search_best_act(self, grid, my_pos):
         boxes = []
         goals = []
         for r in range(len(grid)):
             for c in range(len(grid[r])):
-                if grid[r][c] in ["B", "K"]:
+                if grid[r][c] in ["B", "C"]:
                     boxes.append((r, c))
                 elif grid[r][c] == "D":
                     goals.append((r, c))
@@ -65,38 +61,53 @@ class agent_player2:
         if not boxes or not goals:
             return "Stay"
 
-        best_box = min(
-            boxes, key=lambda b: self.bfs_distance(grid, my_pos, b)
-        )
+        best_plan = None
+        min_cost = float("inf")
 
-        pq = []
-        h_start = self.bfs_distance(grid, my_pos, best_box)
-        heapq.heappush(pq, (h_start, [], my_pos))
+        for box in boxes:
+            br, bc = box
+            priority_bonus = -2 if grid[br][bc] == "C" else 0
 
-        visited = set()
+            for goal in goals:
+                gr, gc = goal
 
-        while len(pq) > 0:
-            h_val, acts, curr_pos = heapq.heappop(pq)
+                for act in ["North", "South", "West", "East"]:
+                    push_pos = None
+                    if act == "North":
+                        push_pos = (br + 1, bc)
+                    elif act == "South":
+                        push_pos = (br - 1, bc)
+                    elif act == "West":
+                        push_pos = (br, bc + 1)
+                    elif act == "East":
+                        push_pos = (br, bc - 1)
 
-            if curr_pos in visited:
-                continue
-            visited.add(curr_pos)
+                    pr, pc = push_pos
+                    if not (0 <= pr < len(grid) and 0 <= pc < len(grid[0])):
+                        continue
+                    if grid[pr][pc] == "%":
+                        continue
 
-            cr, cc = curr_pos
-            br, bc = best_box
-            if abs(cr - br) + abs(cc - bc) == 1:
-                if len(acts) > 0:
-                    return acts[0]
-                return "Stay"
+                    path_to_push = self.bfs_path(grid, my_pos, push_pos, {box})
+                    if path_to_push is not None:
+                        cost = (
+                            len(path_to_push)
+                            + abs(br - gr)
+                            + abs(bc - gc)
+                            + priority_bonus
+                        )
+                        if cost < min_cost:
+                            min_cost = cost
+                            best_plan = (path_to_push, act, push_pos)
 
-            for act in ["North", "South", "West", "East"]:
-                next_pos = self.get_next_position(curr_pos, act)
-                if next_pos is not None:
-                    nr, nc = next_pos
-                    if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]):
-                        if grid[nr][nc] != "%" and next_pos not in visited:
-                            h_next = self.bfs_distance(grid, next_pos, best_box)
-                            heapq.heappush(pq, (h_next, acts + [act], next_pos))
+        if best_plan is not None:
+            path_to_push, push_act, push_pos = best_plan
+
+            if my_pos != push_pos:
+                if len(path_to_push) > 0:
+                    return path_to_push[0]
+            else:
+                return push_act
 
         return "Stay"
 

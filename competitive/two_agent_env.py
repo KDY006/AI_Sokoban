@@ -1,5 +1,6 @@
 import random
 
+
 class TwoAgentEnv:
 
     def __init__(self, map_file, max_steps):
@@ -9,15 +10,14 @@ class TwoAgentEnv:
         self.goals = set()
         self.p1_pos = None
         self.p2_pos = None
-
         self.load_map(map_file)
 
     def load_map(self, map_file):
         with open(map_file, "r", encoding="utf-8") as f:
             for line in f:
-                row = list(line.strip())
-                if row:
-                    self.grid.append(row)
+                row_str = line.rstrip("\r\n")
+                if row_str:
+                    self.grid.append(list(row_str))
 
         for r in range(len(self.grid)):
             for c in range(len(self.grid[r])):
@@ -42,13 +42,13 @@ class TwoAgentEnv:
             return (r, c - 1)
         if act == "East":
             return (r, c + 1)
-        return (r, c)  
+        return (r, c)
 
     def is_wall(self, pos):
         r, c = pos
         if 0 <= r < len(self.grid) and 0 <= c < len(self.grid[0]):
             return self.grid[r][c] == "%"
-        return True  
+        return True
 
     def is_box(self, pos):
         r, c = pos
@@ -63,23 +63,31 @@ class TwoAgentEnv:
 
         if next_p1 == next_p2:
             return True
-
+        
         if self.is_box(next_p1) and next_p1 == next_p2:
+            return True
+
+        if next_p1 == self.p2_pos and next_p2 == self.p1_pos:
             return True
 
         return False
 
     def apply_move(self, agent_id, act):
         cur_pos = self.p1_pos if agent_id == 1 else self.p2_pos
+        other_agent_pos = self.p2_pos if agent_id == 1 else self.p1_pos
         target_pos = self.get_next_position(cur_pos, act)
 
-        if self.is_wall(target_pos):
+        if self.is_wall(target_pos) or target_pos == other_agent_pos:
             return False
 
         if self.is_box(target_pos):
             box_next_pos = self.get_next_position(target_pos, act)
 
-            if self.is_wall(box_next_pos) or self.is_box(box_next_pos):
+            if (
+                self.is_wall(box_next_pos)
+                or self.is_box(box_next_pos)
+                or box_next_pos == other_agent_pos
+            ):
                 return False
 
             br, bc = box_next_pos
