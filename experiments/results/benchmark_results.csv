@@ -1,5 +1,5 @@
 Map,Boxes,Cost_UCS,Cost_AStar,Optimal_Match,UCS_Nodes,AStar_Nodes,Node_Reduction_Ratio,UCS_Peak_Frontier,AStar_Peak_Frontier,UCS_Time_ms,AStar_Time_ms,Speedup
-example_map.txt,7,34,34,True,494986,8478,58.38,112480,2073,16562.25,1310.74,12.64
-map_02_two_boxes.txt,2,7,7,True,327,33,9.91,243,40,7.45,2.23,3.34
-map_03_three_boxes.txt,3,14,14,True,36164,878,41.19,16890,852,1079.01,107.17,10.07
-map_04_four_boxes.txt,4,23,23,True,2789819,22606,123.41,632276,20310,118418.7,2542.02,46.58
+map_deadlock.txt,1,Unsolvable,Unsolvable,True,7,0,7.0,3,0,0.28,0.15,1.79
+map_02_two_boxes.txt,2,7,7,True,327,33,9.91,243,40,9.49,7.92,1.2
+map_03_three_boxes.txt,3,14,14,True,36164,878,41.19,16890,852,1353.4,131.88,10.26
+map_04_four_boxes.txt,4,23,23,True,2789819,22606,123.41,632276,20310,111120.67,2907.09,38.22

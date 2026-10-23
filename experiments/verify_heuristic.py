@@ -41,13 +41,13 @@ def verify_heuristic_on_map(map_file: str, max_transitions_to_test: int = 2000) 
     """
     map_name = os.path.basename(map_file)
     print(f"\n{'='*70}")
-    print(f"[*] KIỂM CHỨNG HEURISTIC TRÊN BẢN ĐỒ: {map_name}")
+    print(f"[*] KIEM CHUNG HEURISTIC TREN BAN DO: {map_name}")
     print(f"{'='*70}")
 
     try:
         init_state, walls, goals, r, c = parse_map(map_file)
     except Exception as e:
-        print(f"[-] Bỏ qua {map_name} do lỗi đọc file: {e}")
+        print(f"[-] Bo qua {map_name} do loi doc file: {e}")
         return {}
 
     problem = SokobanProblem(init_state, walls, goals)
@@ -56,7 +56,7 @@ def verify_heuristic_on_map(map_file: str, max_transitions_to_test: int = 2000) 
     # 1. Tìm đường đi nghiệm tối ưu bằng A*
     actions, opt_cost, stats = astar_search(problem)
     if actions is None:
-        print("[-] Bản đồ không có lời giải, bỏ qua kiểm chứng.")
+        print("[-] Ban do khong co loi giai, bo qua kiem chung.")
         return {}
 
     # --- KIỂM CHỨNG ADMISSIBILITY ---
@@ -81,7 +81,7 @@ def verify_heuristic_on_map(map_file: str, max_transitions_to_test: int = 2000) 
 
         if h_val > remaining_opt_cost:
             path_admissible = False
-            print(f"  [!] Vi phạm Admissibility tại bước {step_idx + 1}: h = {h_val} > h* = {remaining_opt_cost}")
+            print(f"  [!] Vi pham Admissibility tai buoc {step_idx + 1}: h = {h_val} > h* = {remaining_opt_cost}")
             break
 
         curr_state = next_st
@@ -120,7 +120,7 @@ def verify_heuristic_on_map(map_file: str, max_transitions_to_test: int = 2000) 
                 # Điều kiện Consistent: h(s) <= step_cost + h(s') <=> h(s) - h(s') <= step_cost
                 if delta_h > step_cost:
                     inconsistent_cases += 1
-                    print(f"  [!] Vi phạm Consistent: h(s)={h_curr}, h(s')={h_succ}, c={step_cost}, delta={delta_h}")
+                    print(f"  [!] Vi pham Consistent: h(s)={h_curr}, h(s')={h_succ}, c={step_cost}, delta={delta_h}")
 
             if succ not in visited and tested_transitions < max_transitions_to_test:
                 visited.add(succ)
@@ -129,20 +129,20 @@ def verify_heuristic_on_map(map_file: str, max_transitions_to_test: int = 2000) 
     consistent_overall = (inconsistent_cases == 0)
 
     # In kết quả kiểm chứng
-    print(f"\n--- BÁO CÁO KẾT QUẢ CHO {map_name} ---")
-    print(f"1. TÍNH ADMISSIBILITY (Đáng tin):")
-    print(f"   - Chi phí tối ưu h*(S0)        : {opt_cost}")
-    print(f"   - Heuristic ước lượng h(S0)    : {h_s0}")
-    print(f"   - h(Goal) = 0                  : {'ĐÚNG (0.0)' if is_goal_zero else 'SAI'}")
-    print(f"   - Số trạng thái trên đường tối ưu đã test : {path_states_tested}")
-    print(f"   - Kết luận Admissibility       : {'THỎA MÃN (PASS)' if admissible_overall else 'VI PHẠM (FAIL)'}")
+    print(f"\n--- BAO CAO KET QUA CHO {map_name} ---")
+    print(f"1. TINH ADMISSIBILITY (Dang tin):")
+    print(f"   - Chi phi toi uu h*(S0)        : {opt_cost}")
+    print(f"   - Heuristic uoc luong h(S0)    : {h_s0}")
+    print(f"   - h(Goal) = 0                  : {'DUNG (0.0)' if is_goal_zero else 'SAI'}")
+    print(f"   - So trang thai tren duong toi uu da test : {path_states_tested}")
+    print(f"   - Ket luan Admissibility       : {'THOA MAN (PASS)' if admissible_overall else 'VI PHAM (FAIL)'}")
 
-    print(f"\n2. TÍNH CONSISTENCY (Nhất quán / Đơn điệu):")
-    print(f"   - Số bước chuyển tiếp đã test  : {tested_transitions:,}")
-    print(f"   - Delta h tối đa (h(s) - h(s')): {max_delta_h:.2f} (Yêu cầu <= 1.0)")
-    print(f"   - Delta h tối thiểu            : {min_delta_h:.2f}")
-    print(f"   - Số vi phạm tính nhất quán    : {inconsistent_cases}")
-    print(f"   - Kết luận Consistency         : {'THỎA MÃN (PASS)' if consistent_overall else 'VI PHẠM (FAIL)'}")
+    print(f"\n2. TINH CONSISTENCY (Nhat quan / Don dieu):")
+    print(f"   - So buoc chuyen tiep da test  : {tested_transitions:,}")
+    print(f"   - Delta h toi da (h(s) - h(s')): {max_delta_h:.2f} (Yeu cau <= 1.0)")
+    print(f"   - Delta h toi thieu            : {min_delta_h:.2f}")
+    print(f"   - So vi pham tinh nhat quan    : {inconsistent_cases}")
+    print(f"   - Ket luan Consistency         : {'THOA MAN (PASS)' if consistent_overall else 'VI PHAM (FAIL)'}")
 
     return {
         'Map': map_name,
@@ -167,7 +167,7 @@ def run_all_verifications():
     candidate_files = []
     if os.path.exists(maps_dir):
         for fname in sorted(os.listdir(maps_dir)):
-            if fname.endswith('.txt') and not fname.startswith('competitive'):
+            if fname.endswith('.txt') and not fname.startswith('competitive') and not fname.startswith('map_deadlock'):
                 fpath = os.path.join(maps_dir, fname)
                 if os.path.getsize(fpath) > 0:
                     candidate_files.append(fpath)
@@ -187,7 +187,7 @@ def run_all_verifications():
             writer = csv.DictWriter(f, fieldnames=all_results[0].keys())
             writer.writeheader()
             writer.writerows(all_results)
-        print(f"\n[+] Đã xuất toàn bộ kết quả kiểm chứng ra: {csv_file}")
+        print(f"\n[+] Da xuat toan bo ket qua kiem chung ra: {csv_file}")
 
 
 if __name__ == '__main__':

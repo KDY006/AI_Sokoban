@@ -55,17 +55,17 @@ def run_benchmark(map_files=None):
     results = []
 
     print("=" * 80)
-    print("           BENCHMARK SO SÁNH HIỆU NĂNG: UCS vs A* (HUNGARIAN BFS)")
+    print("           BENCHMARK SO SANH HIEU NANG: UCS vs A* (HUNGARIAN BFS)")
     print("=" * 80)
 
     for map_file in map_files:
         map_name = os.path.basename(map_file)
-        print(f"\n[*] Đang chạy thực nghiệm trên: {map_name} ...")
+        print(f"\n[*] Dang chay thuc nghiem tren: {map_name} ...")
 
         try:
             init_state, walls, goals, r, c = parse_map(map_file)
         except Exception as e:
-            print(f"[-] Bỏ qua {map_name} do lỗi đọc file: {e}")
+            print(f"[-] Bo qua {map_name} do loi doc file: {e}")
             continue
 
         # 1. Chạy Uniform Cost Search (UCS)
@@ -83,8 +83,8 @@ def run_benchmark(map_files=None):
         row = {
             'Map': map_name,
             'Boxes': len(goals),
-            'Cost_UCS': cost_ucs,
-            'Cost_AStar': cost_astar,
+            'Cost_UCS': cost_ucs if act_ucs is not None else 'Unsolvable',
+            'Cost_AStar': cost_astar if act_astar is not None else 'Unsolvable',
             'Optimal_Match': (cost_ucs == cost_astar),
             'UCS_Nodes': stats_ucs['expanded_nodes'],
             'AStar_Nodes': stats_astar['expanded_nodes'],
@@ -97,12 +97,12 @@ def run_benchmark(map_files=None):
         }
         results.append(row)
 
-        print(f"  + UCS   : Cost = {cost_ucs} | Nodes = {stats_ucs['expanded_nodes']:,} | Peak Frontier = {stats_ucs['max_frontier_size']:,} | Time = {stats_ucs['time_ms']:.2f} ms")
-        print(f"  + A*    : Cost = {cost_astar} | Nodes = {stats_astar['expanded_nodes']:,} | Peak Frontier = {stats_astar['max_frontier_size']:,} | Time = {stats_astar['time_ms']:.2f} ms")
-        print(f"  => A* giảm {node_ratio}x số node duyệt, nhanh hơn {speedup}x so với UCS.")
+        print(f"  + UCS   : Cost = {row['Cost_UCS']} | Nodes = {stats_ucs['expanded_nodes']:,} | Peak Frontier = {stats_ucs['max_frontier_size']:,} | Time = {stats_ucs['time_ms']:.2f} ms")
+        print(f"  + A*    : Cost = {row['Cost_AStar']} | Nodes = {stats_astar['expanded_nodes']:,} | Peak Frontier = {stats_astar['max_frontier_size']:,} | Time = {stats_astar['time_ms']:.2f} ms")
+        print(f"  => A* giam {node_ratio}x so node duyet, nhanh hon {speedup}x so voi UCS.")
 
     if not results:
-        print("[-] Không có kết quả thực nghiệm nào được ghi nhận.")
+        print("[-] Khong co ket qua thuc nghiem nao duoc ghi nhan.")
         return
 
     # 1. Xuất dữ liệu ra file CSV
@@ -111,18 +111,19 @@ def run_benchmark(map_files=None):
         writer = csv.DictWriter(f, fieldnames=results[0].keys())
         writer.writeheader()
         writer.writerows(results)
-    print(f"\n[+] Đã lưu bảng số liệu CSV: {csv_file}")
+    print(f"\n[+] Da luu bang so lieu CSV: {csv_file}")
 
     # 2. Vẽ biểu đồ đối chiếu trực quan (PNG)
     maps = [r['Map'].replace('.txt', '') for r in results]
-    ucs_nodes = [r['UCS_Nodes'] for r in results]
-    astar_nodes = [r['AStar_Nodes'] for r in results]
+    # Dùng max(val, 0.5) để log scale không bị lỗi âm vô cực khi val = 0
+    ucs_nodes = [max(0.5, r['UCS_Nodes']) for r in results]
+    astar_nodes = [max(0.5, r['AStar_Nodes']) for r in results]
 
-    ucs_mem = [r['UCS_Peak_Frontier'] for r in results]
-    astar_mem = [r['AStar_Peak_Frontier'] for r in results]
+    ucs_mem = [max(0.5, r['UCS_Peak_Frontier']) for r in results]
+    astar_mem = [max(0.5, r['AStar_Peak_Frontier']) for r in results]
 
-    ucs_times = [r['UCS_Time_ms'] for r in results]
-    astar_times = [r['AStar_Time_ms'] for r in results]
+    ucs_times = [max(0.01, r['UCS_Time_ms']) for r in results]
+    astar_times = [max(0.01, r['AStar_Time_ms']) for r in results]
 
     x = np.arange(len(maps))
     width = 0.35

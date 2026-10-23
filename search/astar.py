@@ -101,7 +101,7 @@ def astar_search(problem: SokobanProblem) -> Tuple[Optional[List[str]], int, Dic
         # In log định kỳ mỗi 3 giây nếu tìm kiếm lâu
         now = time.perf_counter()
         if now - last_print_time > 3.0:
-            print(f"[A* dang duyet...] So node mo rong: {expanded_nodes:,} | Frontier: {len(frontier):,} | f: {current_f:.1f} (g={current_node.g_cost}, h={current_h:.1f})")
+            print(f"[A* exploring...] Expanded: {expanded_nodes:,} | Frontier: {len(frontier):,} | f: {current_f:.1f} (g={current_node.g_cost}, h={current_h:.1f})")
             last_print_time = now
 
         # Goal Test: Kiểm tra đích khi LẤY NODE RA khỏi Frontier

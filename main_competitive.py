@@ -37,22 +37,22 @@ from gui.game_view import SokobanView
 
 
 def interactive_input_steps() -> Tuple[int, str]:
-    """Hỏi người dùng số bước tối đa n và chọn bản đồ thi đấu."""
+    """Hoi nguoi dung so buoc toi da n va chon ban do thi dau."""
     print("=" * 70)
-    print("      HỆ THỐNG THI ĐẤU ĐỐI KHÁNG 2 AGENT SOKOBAN (COMPETITIVE R6-R8)")
+    print("      HE THONG THI DAU DOI KHANG 2 AGENT SOKOBAN (COMPETITIVE R6-R8)")
     print("=" * 70)
 
     # 1. Nhập số bước n
     default_n = 50
-    user_input = input(f"\nNhập số bước tối đa n (Mặc định {default_n}): ").strip()
+    user_input = input(f"\nNhap so buoc toi da n (Mac dinh {default_n}): ").strip()
     max_steps = default_n
     if user_input.isdigit() and int(user_input) > 0:
         max_steps = int(user_input)
 
     # 2. Chọn map
     default_map = os.path.join(BASE_DIR, "maps", "competitive_map.txt")
-    print(f"\nBản đồ thi đấu mặc định: {os.path.basename(default_map)}")
-    map_choice = input("Nhấn Enter để dùng mặc định, hoặc nhập đường dẫn map: ").strip()
+    print(f"\nBan do thi dau mac dinh: {os.path.basename(default_map)}")
+    map_choice = input("Nhan Enter de dung mac dinh, hoac nhap duong dan map: ").strip()
 
     selected_map = default_map
     if map_choice and os.path.exists(map_choice):
@@ -62,10 +62,10 @@ def interactive_input_steps() -> Tuple[int, str]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Chương trình thi đấu đối kháng 2 Agent Sokoban (R6, R7, R8)")
-    parser.add_argument("--steps", "-n", type=int, default=None, help="Số bước tối đa n cho trận đấu")
-    parser.add_argument("--map", type=str, default=None, help="Đường dẫn file bản đồ thi đấu")
-    parser.add_argument("--no-gui", action="store_true", help="Chạy mô phỏng in log ra console, không mở Pygame GUI")
+    parser = argparse.ArgumentParser(description="Chuong trinh thi dau doi khang 2 Agent Sokoban (R6, R7, R8)")
+    parser.add_argument("--steps", "-n", type=int, default=None, help="So buoc toi da n cho tran dau")
+    parser.add_argument("--map", type=str, default=None, help="Duong dan file ban do thi dau")
+    parser.add_argument("--no-gui", action="store_true", help="Chay mo phong in log ra console, khong mo Pygame GUI")
     args = parser.parse_args()
 
     # Nhập số bước và bản đồ
@@ -76,15 +76,15 @@ def main():
         max_steps, map_file = interactive_input_steps()
 
     if not os.path.exists(map_file):
-        print(f"[X] Lỗi: Không tìm thấy file bản đồ: {map_file}")
+        print(f"[X] Loi: Khong tim thay file ban do: {map_file}")
         return
 
     print("\n" + "=" * 70)
-    print(f"[*] Bản đồ thi đấu:     {os.path.basename(map_file)}")
-    print(f"[*] Số bước tối đa (n): {max_steps} bước")
-    print(f"[*] Player 1 (A):       agent_player1 (A* Search - Màu Xanh)")
-    print(f"[*] Player 2 (P):       agent_player2 (Greedy Best-First - Màu Cam)")
-    print(f"[*] Cơ chế va chạm:     Xác suất p ~ Uniform(0, 1) | p < 0.5: P1 đi, p >= 0.5: P2 đi")
+    print(f"[*] Ban do thi dau:     {os.path.basename(map_file)}")
+    print(f"[*] So buoc toi da (n): {max_steps} buoc")
+    print(f"[*] Player 1 (A):       agent_player1 (A* Search - Mau Xanh)")
+    print(f"[*] Player 2 (P):       agent_player2 (Greedy Best-First - Mau Cam)")
+    print(f"[*] Co che va cham:     Xac suat p ~ Uniform(0, 1) | p < 0.5: P1 di, p >= 0.5: P2 di")
     print("=" * 70)
 
     # Khởi tạo môi trường và 2 tác nhân
@@ -96,7 +96,7 @@ def main():
     history_states: List[List[List[str]]] = [copy.deepcopy(env.grid)]
     history_scores: List[Tuple[int, int]] = [(0, 0)]
 
-    print("\n[*] BẮT ĐẦU TRẬN THI ĐẤU ĐỐI KHÁNG...")
+    print("\n[*] BAT DAU TRAN THI DAU DOI KHANG...")
     print("-" * 70)
 
     # Vòng lặp thi đấu n bước
@@ -113,9 +113,9 @@ def main():
 
         # Cảnh báo nếu có agent vượt quá thời gian cho phép 1,000 ms (R7)
         if t1_elapsed > 1000.0:
-            print(f"  [!] CẢNH BÁO: Player 1 vượt quá thời gian quy định ({t1_elapsed:.1f} ms > 1,000 ms)!")
+            print(f"  [!] CANH BAO: Player 1 vuot qua thoi gian quy dinh ({t1_elapsed:.1f} ms > 1,000 ms)!")
         if t2_elapsed > 1000.0:
-            print(f"  [!] CẢNH BÁO: Player 2 vượt quá thời gian quy định ({t2_elapsed:.1f} ms > 1,000 ms)!")
+            print(f"  [!] CANH BAO: Player 2 vuot qua thoi gian quy dinh ({t2_elapsed:.1f} ms > 1,000 ms)!")
 
         # 3. Kiểm tra xung đột và thực thi hành động qua môi trường
         has_conflict = False
@@ -133,13 +133,13 @@ def main():
         history_scores.append((score_p1, score_p2))
 
         # In log chi tiết từng bước
-        conflict_msg = " | [XUNG ĐỘT PHÁT SINH - Xử lý theo xác suất p ~ U(0,1)]" if has_conflict else ""
+        conflict_msg = " | [XUNG DOT PHAT SINH - Xu ly theo xac suat p ~ U(0,1)]" if has_conflict else ""
 
         print(
-            f"  Bước {step:02d}/{max_steps}: "
+            f"  Buoc {step:02d}/{max_steps}: "
             f"P1 (A) -> {act1:<5} ({t1_elapsed:4.1f}ms) | "
             f"P2 (P) -> {act2:<5} ({t2_elapsed:4.1f}ms) | "
-            f"Điểm: {score_p1} - {score_p2}{conflict_msg}"
+            f"Diem: {score_p1} - {score_p2}{conflict_msg}"
         )
 
         if env.is_game_over():
@@ -148,35 +148,35 @@ def main():
     # Phân định thắng bại sau n bước
     final_p1, final_p2 = env.get_scores()
     print("-" * 70)
-    print("                    KẾT QUẢ CHUNG CUỘC")
+    print("                    KET QUA CHUNG CUOC")
     print("-" * 70)
-    print(f"  + Tổng số bước hoàn thành: {len(history_states) - 1} / {max_steps}")
-    print(f"  + Điểm Player 1 (A):        {final_p1} hộp trên đích (Thùng 'C')")
-    print(f"  + Điểm Player 2 (P):        {final_p2} hộp trên đích (Thùng 'K')")
+    print(f"  + Tong so buoc hoan thanh: {len(history_states) - 1} / {max_steps}")
+    print(f"  + Diem Player 1 (A):        {final_p1} hop tren dich (Thung 'C')")
+    print(f"  + Diem Player 2 (P):        {final_p2} hop tren dich (Thung 'K')")
 
     if final_p1 > final_p2:
-        winner_text = "PLAYER 1 CHIẾN THẮNG!"
+        winner_text = "PLAYER 1 CHIEN THANG!"
     elif final_p2 > final_p1:
-        winner_text = "PLAYER 2 CHIẾN THẮNG!"
+        winner_text = "PLAYER 2 CHIEN THANG!"
     else:
-        winner_text = "KẾT QUẢ HÒA NHAU!"
+        winner_text = "KET QUA HOA NHAU!"
 
     print(f"  ==> {winner_text}")
     print("-" * 70)
 
     # Khởi chạy giao diện Pygame hiển thị kết quả
     if not args.no_gui:
-        print("\n[*] Đang khởi động giao diện Pygame trực quan...")
-        print("  - Phím [Space]:     Tạm dừng / Tiếp tục tự động diễn hoạt")
-        print("  - Phím [->] Phải:   Bước tới 1 lượt (khi đang Pause)")
-        print("  - Phím [<-] Trái:   Lùi lại 1 lượt (khi đang Pause)")
-        print("  - Phím [ESC]:       Đóng cửa sổ\n")
+        print("\n[*] Dang khoi dong giao dien Pygame truc quan...")
+        print("  - Phim [Space]:     Tam dung / Tiep tuc tu dong dien hoat")
+        print("  - Phim [->] Phai:   Buoc toi 1 luot (khi dang Pause)")
+        print("  - Phim [<-] Trai:   Lui lai 1 luot (khi dang Pause)")
+        print("  - Phim [ESC]:       Dong cua so\n")
 
         view = SokobanView(title=f"AI Sokoban - Competitive Match ({final_p1} - {final_p2}) | n={max_steps}")
         view.set_competitive_history(states=history_states, scores=history_scores, max_steps=max_steps)
         view.run_interactive()
     else:
-        print("[*] Chế độ --no-gui được bật, kết thúc chương trình mà không mở GUI.")
+        print("[*] Che do --no-gui duoc bat, ket thuc chuong trinh ma khong mo GUI.")
 
 
 if __name__ == "__main__":

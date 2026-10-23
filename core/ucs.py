@@ -6,6 +6,7 @@ Mô tả: Cài đặt giải thuật Uniform Cost Search (UCS) theo đúng R2.
 
 import heapq
 import time
+import sys
 from typing import List, Tuple, Optional, Dict
 from core.state import State
 from core.problem import SokobanProblem
@@ -59,7 +60,8 @@ def ucs_search(problem: SokobanProblem) -> Tuple[Optional[List[str]], int, Dict]
         # In log tiến độ định kỳ (mỗi 3 giây) để theo dõi không gian duyệt của UCS
         now = time.perf_counter()
         if now - last_print_time > 3.0:
-            print(f"[UCS đang duyệt...] Số node đã mở rộng: {expanded_nodes:,} | Frontier: {len(frontier):,} | Chi phí g(n): {current_cost}")
+            sys.stdout.write(f"[UCS exploring...] Expanded: {expanded_nodes:,} | Frontier: {len(frontier):,} | Cost g(n): {current_cost}\n")
+            sys.stdout.flush()
             last_print_time = now
 
         # Goal Test thực hiện khi LẤY NODE RA khỏi Frontier (đảm bảo tính tối ưu của UCS)
