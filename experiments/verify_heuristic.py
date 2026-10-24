@@ -164,13 +164,18 @@ def run_all_verifications():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     maps_dir = os.path.join(base_dir, 'maps')
 
+    # Danh sách các bản đồ chuẩn dùng để kiểm chứng Admissibility & Consistency (R4)
+    verify_target_maps = [
+        'example_map.txt',
+        'map_02_two_boxes.txt',
+        'map_03_three_boxes.txt',
+        'map_04_four_boxes.txt'
+    ]
     candidate_files = []
-    if os.path.exists(maps_dir):
-        for fname in sorted(os.listdir(maps_dir)):
-            if fname.endswith('.txt') and not fname.startswith('competitive') and not fname.startswith('map_deadlock'):
-                fpath = os.path.join(maps_dir, fname)
-                if os.path.getsize(fpath) > 0:
-                    candidate_files.append(fpath)
+    for mname in verify_target_maps:
+        fpath = os.path.join(maps_dir, mname)
+        if os.path.exists(fpath) and os.path.getsize(fpath) > 0:
+            candidate_files.append(fpath)
 
     all_results = []
     for m in candidate_files:

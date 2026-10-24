@@ -7,6 +7,7 @@ class agent_player1:
     def __init__(self):
         self.name = "Player 1"
         self.time_limit = 0.85
+        self.static_goals = None
 
     def get_next_position(self, pos, act):
         if pos is None:
@@ -63,20 +64,31 @@ class agent_player1:
         return None
 
     def search_best_act(self, grid, my_pos):
+        # Lưu cố định vị trí các ô đích ban đầu (không bị mất khi Agent bước lên ô đích)
+        if self.static_goals is None:
+            self.static_goals = set()
+            for r in range(len(grid)):
+                for c in range(len(grid[r])):
+                    if grid[r][c] in ["D", "C", "K", "+"]:
+                        self.static_goals.add((r, c))
+
         boxes = []
-        goals = []
-        all_boxes = set()
+        all_obstacles = set()
         for r in range(len(grid)):
             for c in range(len(grid[r])):
                 ch = grid[r][c]
                 if ch in ["B", "K"]:
                     boxes.append((r, c))
-                if ch in ["B", "C", "K"]:
-                    all_boxes.add((r, c))
-                if ch == "D":
-                    goals.append((r, c))
+                if ch in ["B", "C", "K", "P"]:
+                    all_obstacles.add((r, c))
 
-        if not boxes or not goals:
+        # Chỉ chọn các ô đích thực sự chưa bị hộp (B, C, K) chiếm chỗ (dù Agent có đứng lên hay không)
+        free_goals = [
+            g for g in self.static_goals
+            if grid[g[0]][g[1]] not in ["B", "C", "K"]
+        ]
+
+        if not boxes or not free_goals:
             return "Stay"
 
         best_plan = None
@@ -87,8 +99,10 @@ class agent_player1:
             # Thưởng điểm ưu tiên cướp thùng đối thủ (K)
             steal_bonus = -8 if grid[br][bc] == "K" else 0
 
-            for goal in goals:
+            for goal in free_goals:
                 gr, gc = goal
+                if goal == box:
+                    continue
 
                 for act in ["North", "South", "West", "East"]:
                     next_box_pos = self.get_next_position(box, act)
@@ -97,7 +111,7 @@ class agent_player1:
                     # Ô sau khi đẩy hộp phải trống hoặc là đích (không được là tường hoặc hộp khác)
                     if not (0 <= nbr < len(grid) and 0 <= nbc < len(grid[0])):
                         continue
-                    if grid[nbr][nbc] in ["%", "B", "C", "K"]:
+                    if grid[nbr][nbc] in ["%", "B", "C", "K", "P"]:
                         continue
 
                     push_pos = None
@@ -116,8 +130,8 @@ class agent_player1:
                     if grid[pr][pc] in ["%", "B", "C", "K"]:
                         continue
 
-                    # Đường đi của Agent tới ô đẩy phải tránh tất cả các hộp hiện tại
-                    path_to_push = self.bfs_path(grid, my_pos, push_pos, all_boxes)
+                    # Đường đi của Agent tới ô đẩy phải tránh tất cả các hộp và đối thủ
+                    path_to_push = self.bfs_path(grid, my_pos, push_pos, all_obstacles)
                     if path_to_push is not None:
                         # Hàm đánh giá A*: Chi phí đi tới ô đẩy + Ước lượng khoảng cách hộp tới đích
                         h_cost = (abs(nbr - gr) + abs(nbc - gc)) * 2

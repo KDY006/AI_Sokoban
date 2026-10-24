@@ -79,7 +79,7 @@ def get_available_maps() -> List[str]:
         for fname in sorted(os.listdir(maps_dir)):
             if fname.endswith(".txt"):
                 fpath = os.path.join(maps_dir, fname)
-                if os.path.getsize(fpath) > 0 and fname != "competitive_map.txt":
+                if os.path.getsize(fpath) > 0 and not fname.startswith("competitive_map"):
                     valid_maps.append(fpath)
     return valid_maps
 
@@ -131,7 +131,6 @@ def main():
     parser = argparse.ArgumentParser(description="Chuong trinh giai Sokoban Single-Agent (R5)")
     parser.add_argument("--map", type=str, default=None, help="Duong dan file ban do")
     parser.add_argument("--algo", type=str, choices=["ucs", "astar", "UCS", "A*"], default=None, help="Thuat toan: ucs hoac astar")
-    parser.add_argument("--no-gui", action="store_true", help="Chi giai va in ket qua console, khong mo Pygame GUI")
     args = parser.parse_args()
 
     # Xác định map và thuật toán
@@ -206,19 +205,16 @@ def main():
         history_grids.append(state_to_grid(next_state, walls, goals, max_row, max_col))
         curr_state = next_state
 
-    # Khởi chạy Pygame GUI
-    if not args.no_gui:
-        print("\n[*] Dang khoi dong giao dien Pygame truc quan...")
-        print("  - Phim [Space]:     Tam dung / Tiep tuc tu dong chay")
-        print("  - Phim [->] Phai:   Buoc toi 1 buoc (khi dang Pause)")
-        print("  - Phim [<-] Trai:   Lui lai 1 buoc (khi dang Pause)")
-        print("  - Phim [ESC]:       Dong cua so\n")
+    # Tự động khởi chạy Pygame GUI khi có kết quả
+    print("\n[*] Dang khoi dong giao dien Pygame truc quan...")
+    print("  - Phim [Space]:     Tam dung / Tiep tuc tu dong chay")
+    print("  - Phim [->] Phai:   Buoc toi 1 buoc (khi dang Pause)")
+    print("  - Phim [<-] Trai:   Lui lai 1 buoc (khi dang Pause)")
+    print("  - Phim [ESC]:       Dong cua so\n")
 
-        view = SokobanView(title=f"AI Sokoban - Single Agent ({algo_name}) | {os.path.basename(map_file)}")
-        view.set_states(history_grids, algorithm=algo_name)
-        view.run_interactive()
-    else:
-        print("[*] Che do --no-gui duoc bat, ket thuc chuong trinh ma khong mo GUI.")
+    view = SokobanView(title=f"AI Sokoban - Single Agent ({algo_name}) | {os.path.basename(map_file)}")
+    view.set_states(history_grids, algorithm=algo_name)
+    view.run_interactive()
 
 
 if __name__ == "__main__":

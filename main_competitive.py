@@ -60,13 +60,25 @@ def interactive_input_steps() -> Tuple[int, str]:
         max_steps = int(user_input)
 
     # 2. Chọn map
-    default_map = os.path.join(BASE_DIR, "maps", "competitive_map.txt")
-    print(f"\nBan do thi dau mac dinh: {os.path.basename(default_map)}")
-    map_choice = input("Nhan Enter de dung mac dinh, hoac nhap duong dan map: ").strip()
+    map_v1 = os.path.join(BASE_DIR, "maps", "competitive_map_v1.txt")
+    map_v2 = os.path.join(BASE_DIR, "maps", "competitive_map_v2.txt")
 
-    selected_map = default_map
-    if map_choice and os.path.exists(map_choice):
-        selected_map = map_choice
+    print("\n--- CHON BAN DO THI DAU DOI KHANG ---")
+    print(f"  1. competitive_map_v1.txt - San dau mo Arena Open Layout (Mac dinh)")
+    print(f"  2. competitive_map_v2.txt - San dau co tru chan Tactical Pillars")
+    print(f"  3. Nhap duong dan file map tuy chinh...")
+
+    choice = input("\nChon ban do [1-3] (Mac dinh 1): ").strip()
+    selected_map = map_v1
+
+    if choice == "2":
+        selected_map = map_v2
+    elif choice == "3":
+        custom_path = input("Nhap duong dan file map: ").strip()
+        if os.path.exists(custom_path):
+            selected_map = custom_path
+        else:
+            print(f"[!] Khong tim thay file, su dung ban do mac dinh: {os.path.basename(map_v1)}")
 
     return max_steps, selected_map
 
@@ -75,13 +87,12 @@ def main():
     parser = argparse.ArgumentParser(description="Chuong trinh thi dau doi khang 2 Agent Sokoban (R6, R7, R8)")
     parser.add_argument("--steps", "-n", type=int, default=None, help="So buoc toi da n cho tran dau")
     parser.add_argument("--map", type=str, default=None, help="Duong dan file ban do thi dau")
-    parser.add_argument("--no-gui", action="store_true", help="Chay mo phong in log ra console, khong mo Pygame GUI")
     args = parser.parse_args()
 
     # Nhập số bước và bản đồ
     if args.steps is not None:
         max_steps = args.steps
-        map_file = args.map if args.map else os.path.join(BASE_DIR, "maps", "competitive_map.txt")
+        map_file = args.map if args.map else os.path.join(BASE_DIR, "maps", "competitive_map_v1.txt")
     else:
         max_steps, map_file = interactive_input_steps()
 
@@ -174,19 +185,16 @@ def main():
     print(f"  ==> {winner_text}")
     print("-" * 70)
 
-    # Khởi chạy giao diện Pygame hiển thị kết quả
-    if not args.no_gui:
-        print("\n[*] Dang khoi dong giao dien Pygame truc quan...")
-        print("  - Phim [Space]:     Tam dung / Tiep tuc tu dong dien hoat")
-        print("  - Phim [->] Phai:   Buoc toi 1 luot (khi dang Pause)")
-        print("  - Phim [<-] Trai:   Lui lai 1 luot (khi dang Pause)")
-        print("  - Phim [ESC]:       Dong cua so\n")
+    # Tự động khởi chạy giao diện Pygame hiển thị kết quả trận đấu
+    print("\n[*] Dang khoi dong giao dien Pygame truc quan...")
+    print("  - Phim [Space]:     Tam dung / Tiep tuc tu dong dien hoat")
+    print("  - Phim [->] Phai:   Buoc toi 1 luot (khi dang Pause)")
+    print("  - Phim [<-] Trai:   Lui lai 1 luot (khi dang Pause)")
+    print("  - Phim [ESC]:       Dong cua so\n")
 
-        view = SokobanView(title=f"AI Sokoban - Competitive Match ({final_p1} - {final_p2}) | n={max_steps}")
-        view.set_competitive_history(states=history_states, scores=history_scores, max_steps=max_steps)
-        view.run_interactive()
-    else:
-        print("[*] Che do --no-gui duoc bat, ket thuc chuong trinh ma khong mo GUI.")
+    view = SokobanView(title=f"AI Sokoban - Competitive Match ({final_p1} - {final_p2}) | n={max_steps}")
+    view.set_competitive_history(states=history_states, scores=history_scores, max_steps=max_steps)
+    view.run_interactive()
 
 
 if __name__ == "__main__":

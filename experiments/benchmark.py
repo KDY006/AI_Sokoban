@@ -38,14 +38,18 @@ def run_benchmark(map_files=None):
 
     if map_files is None:
         maps_dir = os.path.join(base_dir, 'maps')
-        # Tự động tìm các map hợp lệ có nội dung trong thư mục maps/
+        # Danh sách các map chuẩn dùng để đối chiếu Time & Space Complexity (R3)
+        benchmark_target_maps = [
+            'map_deadlock.txt',
+            'map_02_two_boxes.txt',
+            'map_03_three_boxes.txt',
+            'map_04_four_boxes.txt'
+        ]
         candidate_files = []
-        if os.path.exists(maps_dir):
-            for fname in sorted(os.listdir(maps_dir)):
-                if fname.endswith('.txt') and not fname.startswith('competitive'):
-                    fpath = os.path.join(maps_dir, fname)
-                    if os.path.getsize(fpath) > 0:
-                        candidate_files.append(fpath)
+        for mname in benchmark_target_maps:
+            fpath = os.path.join(maps_dir, mname)
+            if os.path.exists(fpath) and os.path.getsize(fpath) > 0:
+                candidate_files.append(fpath)
         map_files = candidate_files
 
     if not map_files:
