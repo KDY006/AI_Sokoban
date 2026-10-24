@@ -1,5 +1,4 @@
 from collections import deque
-import heapq
 import threading
 
 
@@ -22,6 +21,19 @@ class agent_player1:
         if act == "East":
             return (r, c + 1)
         return (r, c)
+
+    def get_push_direction(self, agent_pos, box_pos):
+        ar, ac = agent_pos
+        br, bc = box_pos
+        if ar == br + 1 and ac == bc:
+            return "North"
+        if ar == br - 1 and ac == bc:
+            return "South"
+        if ar == br and ac == bc + 1:
+            return "West"
+        if ar == br and ac == bc - 1:
+            return "East"
+        return None
 
     def bfs_path(self, grid, start_pos, target_pos, obstacles):
         """Tìm đường đi ngắn nhất cho Agent từ start_pos tới target_pos né tường & vật cản."""
@@ -53,11 +65,15 @@ class agent_player1:
     def search_best_act(self, grid, my_pos):
         boxes = []
         goals = []
+        all_boxes = set()
         for r in range(len(grid)):
             for c in range(len(grid[r])):
-                if grid[r][c] in ["B", "K"]:
+                ch = grid[r][c]
+                if ch in ["B", "K"]:
                     boxes.append((r, c))
-                elif grid[r][c] == "D":
+                if ch in ["B", "C", "K"]:
+                    all_boxes.add((r, c))
+                if ch == "D":
                     goals.append((r, c))
 
         if not boxes or not goals:
@@ -68,11 +84,21 @@ class agent_player1:
 
         for box in boxes:
             br, bc = box
+            # Thưởng điểm ưu tiên cướp thùng đối thủ (K)
+            steal_bonus = -8 if grid[br][bc] == "K" else 0
+
             for goal in goals:
                 gr, gc = goal
 
                 for act in ["North", "South", "West", "East"]:
                     next_box_pos = self.get_next_position(box, act)
+                    nbr, nbc = next_box_pos
+
+                    # Ô sau khi đẩy hộp phải trống hoặc là đích (không được là tường hoặc hộp khác)
+                    if not (0 <= nbr < len(grid) and 0 <= nbc < len(grid[0])):
+                        continue
+                    if grid[nbr][nbc] in ["%", "B", "C", "K"]:
+                        continue
 
                     push_pos = None
                     if act == "North":
@@ -87,12 +113,15 @@ class agent_player1:
                     pr, pc = push_pos
                     if not (0 <= pr < len(grid) and 0 <= pc < len(grid[0])):
                         continue
-                    if grid[pr][pc] == "%":
+                    if grid[pr][pc] in ["%", "B", "C", "K"]:
                         continue
 
-                    path_to_push = self.bfs_path(grid, my_pos, push_pos, {box})
+                    # Đường đi của Agent tới ô đẩy phải tránh tất cả các hộp hiện tại
+                    path_to_push = self.bfs_path(grid, my_pos, push_pos, all_boxes)
                     if path_to_push is not None:
-                        cost = len(path_to_push) + abs(br - gr) + abs(bc - gc)
+                        # Hàm đánh giá A*: Chi phí đi tới ô đẩy + Ước lượng khoảng cách hộp tới đích
+                        h_cost = (abs(nbr - gr) + abs(nbc - gc)) * 2
+                        cost = len(path_to_push) + h_cost + steal_bonus
                         if cost < min_total_cost:
                             min_total_cost = cost
                             best_plan = (path_to_push, act, push_pos, box)
@@ -103,8 +132,9 @@ class agent_player1:
                 if len(path_to_push) > 0:
                     return path_to_push[0]
             else:
-
-                return push_act
+                # Đang đứng tại ô đẩy -> Thực hiện đẩy hộp theo hướng chính xác
+                push_dir = self.get_push_direction(my_pos, target_box)
+                return push_dir if push_dir else push_act
 
         return "Stay"
 

@@ -39,13 +39,19 @@ class State:
 
 def parse_map(file_path: str) -> Tuple[State, FrozenSet[Tuple[int, int]], FrozenSet[Tuple[int, int]], int, int]:
     """
-    Đọc file bản đồ Sokoban theo đúng quy ước ký tự đề bài:
+    Đọc file bản đồ Sokoban theo đúng quy ước ký tự đề bài (Chế độ Đơn tác nhân R1-R5):
         % : Tường (wall)
         A : Vị trí ban đầu của Agent
         B : Hộp (box)
         D : Điểm đích (goal)
         C : Hộp đã nằm đúng điểm đích
         ' ': Ô trống
+
+    Ghi chú: Đối với chế độ đối kháng 2 Agent (R6-R8), bản đồ được nạp và quản lý riêng 
+    tại competitive/two_agent_env.py với các ký hiệu mở rộng:
+        P : Vị trí Player 2
+        K : Hộp đã nằm trên đích được ghi điểm bởi Player 2
+
     Trả về: (initial_state, walls, goals, max_row, max_col)
     """
     walls: Set[Tuple[int, int]] = set()

@@ -42,3 +42,6 @@ desktop.ini
 # Output / Log / Benchmark tạm thời
 *.log
 experiments/results/*.tmp
+
+# Map game sokoban
+levels_maps/

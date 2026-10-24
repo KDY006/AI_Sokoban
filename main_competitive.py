@@ -9,6 +9,16 @@ Tính năng:
   - Mô phỏng cơ chế xử lý va chạm xác suất: p ~ Uniform(0, 1) (p < 0.5: P1 đi, ngược lại P2 đi).
   - Ghi nhận lịch sử trạng thái, điểm số thời gian thực và xác định người thắng cuộc.
   - Khởi chạy giao diện Pygame hiển thị trận đấu với màu hộp riêng biệt cho từng bên.
+
+Quy ước ký hiệu bản đồ chế độ đối kháng (Two-Agent Map Legend):
+  % : Tường / Chướng ngại vật cố định (Wall)
+  ' ' : Ô trống nền (Empty floor)
+  D : Ô đích chung (Designated goal)
+  B : Hộp tự do trung lập (Neutral box)
+  A : Vị trí Player 1 (Màu Xanh Dương)
+  P : Vị trí Player 2 (Màu Cam)
+  C : Hộp đã vào đích được ghi điểm bởi Player 1 (+1 điểm cho P1)
+  K : Hộp đã vào đích được ghi điểm bởi Player 2 (+1 điểm cho P2)
 """
 
 import os
