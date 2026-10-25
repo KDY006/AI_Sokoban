@@ -1,12 +1,11 @@
 """
 Module: core/state.py
-Phụ trách: Duy (Leader - Core Architecture)
-Mô tả: Định nghĩa State bất biến (hashable) và hàm đọc file bản đồ Sokoban.
+Mo ta: Dinh nghia lop State bieu dien trang thai Sokoban va ham parse_map de doc ban do tu file.
 """
 
 from typing import Tuple, FrozenSet, Set
 
-# 4 hướng di chuyển cơ bản theo đề bài (North, South, West, East)
+# 4 huong di chuyen co ban (North, South, West, East)
 ACTIONS = {
     'North': (-1, 0),
     'South': (1, 0),
@@ -17,8 +16,8 @@ ACTIONS = {
 
 class State:
     """
-    Biểu diễn trạng thái bất biến của trò chơi Sokoban.
-    Bao gồm tọa độ Agent và tập hợp tọa độ các Hộp.
+    Bieu dien trang thai bat bien cua tro choi Sokoban.
+    Bao gom toa do Agent va tap hop toa do cac Hop.
     """
     def __init__(self, player_pos: Tuple[int, int], boxes_pos: FrozenSet[Tuple[int, int]]):
         self.player_pos: Tuple[int, int] = player_pos
@@ -39,20 +38,13 @@ class State:
 
 def parse_map(file_path: str) -> Tuple[State, FrozenSet[Tuple[int, int]], FrozenSet[Tuple[int, int]], int, int]:
     """
-    Đọc file bản đồ Sokoban theo đúng quy ước ký tự đề bài (Chế độ Đơn tác nhân R1-R5):
-        % : Tường (wall)
-        A : Vị trí ban đầu của Agent
-        B : Hộp (box)
-        D : Điểm đích (goal)
-        C : Hộp đã nằm đúng điểm đích
-        ' ': Ô trống
-
-    Ghi chú: Đối với chế độ đối kháng 2 Agent (R6-R8), bản đồ được nạp và quản lý riêng 
-    tại competitive/two_agent_env.py với các ký hiệu mở rộng:
-        P : Vị trí Player 2
-        K : Hộp đã nằm trên đích được ghi điểm bởi Player 2
-
-    Trả về: (initial_state, walls, goals, max_row, max_col)
+    Doc file ban do Sokoban theo quy uoc ky tu de bai:
+        % : Tuong (wall)
+        A : Vi tri ban dau cua Agent
+        B : Hop chua vao dich (box)
+        D : Diem dich (goal)
+        C : Hop da nam tren diem dich (box on goal)
+        ' ': San trong
     """
     walls: Set[Tuple[int, int]] = set()
     goals: Set[Tuple[int, int]] = set()
@@ -65,6 +57,7 @@ def parse_map(file_path: str) -> Tuple[State, FrozenSet[Tuple[int, int]], Frozen
     max_row = len(lines)
     max_col = max(len(line) for line in lines) if lines else 0
 
+    # Quet tung ky tu tren ban do
     for r, line in enumerate(lines):
         for c, char in enumerate(line):
             coord = (r, c)
@@ -80,8 +73,9 @@ def parse_map(file_path: str) -> Tuple[State, FrozenSet[Tuple[int, int]], Frozen
                 boxes.add(coord)
                 goals.add(coord)
 
+    # Kiem tra vi tri Agent
     if agent_pos is None:
-        raise ValueError("Lỗi: Không tìm thấy vị trí Agent ('A') trên bản đồ!")
+        raise ValueError("Loi: Khong tim thay vi tri Agent ('A') tren ban do!")
 
     initial_state = State(player_pos=agent_pos, boxes_pos=frozenset(boxes))
     return initial_state, frozenset(walls), frozenset(goals), max_row, max_col

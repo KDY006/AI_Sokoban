@@ -1,24 +1,7 @@
 """
 Module: main_competitive.py
-Mục đích: Điểm khởi chạy chính cho chế độ Thi đấu đối kháng 2 Tác nhân (Competitive Two-Agent - R6, R7, R8).
-Tính năng:
-  - Cho phép người dùng nhập số bước n từ bàn phím theo yêu cầu đề bài.
-  - Tải bản đồ thi đấu đối kháng (mặc định maps/competitive_map.txt).
-  - Tích hợp 2 tác nhân độc lập: agent_player1 (A* Search) và agent_player2 (Greedy Best-First).
-  - Giám sát thời gian ra quyết định mỗi bước (đảm bảo <= 1,000 ms).
-  - Mô phỏng cơ chế xử lý va chạm xác suất: p ~ Uniform(0, 1) (p < 0.5: P1 đi, ngược lại P2 đi).
-  - Ghi nhận lịch sử trạng thái, điểm số thời gian thực và xác định người thắng cuộc.
-  - Khởi chạy giao diện Pygame hiển thị trận đấu với màu hộp riêng biệt cho từng bên.
-
-Quy ước ký hiệu bản đồ chế độ đối kháng (Two-Agent Map Legend):
-  % : Tường / Chướng ngại vật cố định (Wall)
-  ' ' : Ô trống nền (Empty floor)
-  D : Ô đích chung (Designated goal)
-  B : Hộp tự do trung lập (Neutral box)
-  A : Vị trí Player 1 (Màu Xanh Dương)
-  P : Vị trí Player 2 (Màu Cam)
-  C : Hộp đã vào đích được ghi điểm bởi Player 1 (+1 điểm cho P1)
-  K : Hộp đã vào đích được ghi điểm bởi Player 2 (+1 điểm cho P2)
+Mo ta: Khoi chay che do thi dau doi khang 2 Tac nhan (Competitive Two-Agent).
+Quan ly vong dau n buoc, xu ly xung dot ngau nhien, tinh diem va mo giao dien Pygame.
 """
 
 import os
@@ -28,14 +11,12 @@ import time
 import argparse
 from typing import List, Tuple
 
-# Đảm bảo console UTF-8 trên Windows
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
 
-# Thêm thư mục gốc vào PYTHONPATH
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
@@ -47,154 +28,112 @@ from gui.game_view import SokobanView
 
 
 def interactive_input_steps() -> Tuple[int, str]:
-    """Hoi nguoi dung so buoc toi da n va chon ban do thi dau."""
+    # Menu nhap so buoc va chon ban do thi dau
     print("=" * 70)
     print("      HE THONG THI DAU DOI KHANG 2 AGENT SOKOBAN (COMPETITIVE R6-R8)")
     print("=" * 70)
 
-    # 1. Nhập số bước n
     default_n = 50
     user_input = input(f"\nNhap so buoc toi da n (Mac dinh {default_n}): ").strip()
     max_steps = default_n
     if user_input.isdigit() and int(user_input) > 0:
         max_steps = int(user_input)
 
-    # 2. Chọn map
-    map_v1 = os.path.join(BASE_DIR, "maps", "competitive_map_v1.txt")
-    map_v2 = os.path.join(BASE_DIR, "maps", "competitive_map_v2.txt")
+    print("\n--- CHON BAN DO THI DAU ---")
+    print("  1. competitive_map_v1.txt (Dau truong mo - Arena Open Layout)")
+    print("  2. competitive_map_v2.txt (Dau truong co tru can - Tactical Pillars)")
+    choice_map = input("Chon ban do [1/2] (Mac dinh 1): ").strip()
 
-    print("\n--- CHON BAN DO THI DAU DOI KHANG ---")
-    print(f"  1. competitive_map_v1.txt - San dau mo Arena Open Layout (Mac dinh)")
-    print(f"  2. competitive_map_v2.txt - San dau co tru chan Tactical Pillars")
-    print(f"  3. Nhap duong dan file map tuy chinh...")
+    if choice_map == "2":
+        selected_map_name = "competitive_map_v2.txt"
+    else:
+        selected_map_name = "competitive_map_v1.txt"
 
-    choice = input("\nChon ban do [1-3] (Mac dinh 1): ").strip()
-    selected_map = map_v1
-
-    if choice == "2":
-        selected_map = map_v2
-    elif choice == "3":
-        custom_path = input("Nhap duong dan file map: ").strip()
-        if os.path.exists(custom_path):
-            selected_map = custom_path
-        else:
-            print(f"[!] Khong tim thay file, su dung ban do mac dinh: {os.path.basename(map_v1)}")
-
-    return max_steps, selected_map
+    map_path = os.path.join(BASE_DIR, "maps", selected_map_name)
+    return max_steps, map_path
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Chuong trinh thi dau doi khang 2 Agent Sokoban (R6, R7, R8)")
-    parser.add_argument("--steps", "-n", type=int, default=None, help="So buoc toi da n cho tran dau")
+    parser = argparse.ArgumentParser(description="Che do thi dau doi khang 2 Agent Sokoban")
+    parser.add_argument("--steps", type=int, default=None, help="So buoc toi da n")
     parser.add_argument("--map", type=str, default=None, help="Duong dan file ban do thi dau")
     args = parser.parse_args()
 
-    # Nhập số bước và bản đồ
-    if args.steps is not None:
+    if args.steps is not None and args.map is not None:
         max_steps = args.steps
-        map_file = args.map if args.map else os.path.join(BASE_DIR, "maps", "competitive_map_v1.txt")
+        map_path = args.map
+    elif args.steps is not None:
+        max_steps = args.steps
+        map_path = os.path.join(BASE_DIR, "maps", "competitive_map_v1.txt")
     else:
-        max_steps, map_file = interactive_input_steps()
+        max_steps, map_path = interactive_input_steps()
 
-    if not os.path.exists(map_file):
-        print(f"[X] Loi: Khong tim thay file ban do: {map_file}")
+    if not os.path.exists(map_path):
+        print(f"[X] Loi: Khong tim thay file ban do: {map_path}")
         return
 
     print("\n" + "=" * 70)
-    print(f"[*] Ban do thi dau:     {os.path.basename(map_file)}")
-    print(f"[*] So buoc toi da (n): {max_steps} buoc")
-    print(f"[*] Player 1 (A):       agent_player1 (A* Search - Mau Xanh)")
-    print(f"[*] Player 2 (P):       agent_player2 (Greedy Best-First - Mau Cam)")
-    print(f"[*] Co che va cham:     Xac suat p ~ Uniform(0, 1) | p < 0.5: P1 di, p >= 0.5: P2 di")
+    print(f"[*] Khoi tao dau truong: {os.path.basename(map_path)}")
+    print(f"[*] So buoc thi dau toi da: n = {max_steps}")
     print("=" * 70)
 
-    # Khởi tạo môi trường và 2 tác nhân
-    env = TwoAgentEnv(map_file, max_steps=max_steps)
+    # Khoi tao moi truong va 2 tac nhan
+    env = TwoAgentEnv(map_path, max_steps)
     p1 = agent_player1()
     p2 = agent_player2()
 
-    # Lưu lịch sử ban đầu (bước 0)
-    history_states: List[List[List[str]]] = [copy.deepcopy(env.grid)]
-    history_scores: List[Tuple[int, int]] = [(0, 0)]
+    history_states = [copy.deepcopy(env.grid)]
+    history_scores = [[0, 0]]
 
-    print("\n[*] BAT DAU TRAN THI DAU DOI KHANG...")
-    print("-" * 70)
-
-    # Vòng lặp thi đấu n bước
+    # Vong lap thi dau tung buoc
     for step in range(1, max_steps + 1):
-        # 1. Player 1 quyết định hành động
+        grid_for_p1 = copy.deepcopy(env.grid)
+        grid_for_p2 = copy.deepcopy(env.grid)
+
         t1_start = time.perf_counter()
-        act1 = p1.get_act(copy.deepcopy(env.grid), env.p1_pos)
+        act1 = p1.get_act(grid_for_p1, env.p1_pos)
         t1_elapsed = (time.perf_counter() - t1_start) * 1000
 
-        # 2. Player 2 quyết định hành động
         t2_start = time.perf_counter()
-        act2 = p2.get_act(copy.deepcopy(env.grid), env.p2_pos)
+        act2 = p2.get_act(grid_for_p2, env.p2_pos)
         t2_elapsed = (time.perf_counter() - t2_start) * 1000
 
-        # Cảnh báo nếu có agent vượt quá thời gian cho phép 1,000 ms (R7)
-        if t1_elapsed > 1000.0:
-            print(f"  [!] CANH BAO: Player 1 vuot qua thoi gian quy dinh ({t1_elapsed:.1f} ms > 1,000 ms)!")
-        if t2_elapsed > 1000.0:
-            print(f"  [!] CANH BAO: Player 2 vuot qua thoi gian quy dinh ({t2_elapsed:.1f} ms > 1,000 ms)!")
-
-        # 3. Kiểm tra xung đột và thực thi hành động qua môi trường
-        has_conflict = False
-        if hasattr(env, "check_conflict"):
-            try:
-                has_conflict = env.check_conflict(act1, act2)
-            except Exception:
-                has_conflict = False
-
+        # Thuc hien buoc di trong moi truong
         env.step(act1, act2)
-        score_p1, score_p2 = env.get_scores()
+        score1, score2 = env.get_scores()
 
-        # Lưu lại lịch sử phục vụ hiển thị trên giao diện
         history_states.append(copy.deepcopy(env.grid))
-        history_scores.append((score_p1, score_p2))
+        history_scores.append([score1, score2])
 
-        # In log chi tiết từng bước
-        conflict_msg = " | [XUNG DOT PHAT SINH - Xu ly theo xac suat p ~ U(0,1)]" if has_conflict else ""
-
-        print(
-            f"  Buoc {step:02d}/{max_steps}: "
-            f"P1 (A) -> {act1:<5} ({t1_elapsed:4.1f}ms) | "
-            f"P2 (P) -> {act2:<5} ({t2_elapsed:4.1f}ms) | "
-            f"Diem: {score_p1} - {score_p2}{conflict_msg}"
-        )
+        if step % 10 == 0 or step == max_steps or step <= 5:
+            print(f"  + Buoc {step:3d}/{max_steps} | P1: {act1:5s} ({t1_elapsed:4.1f}ms) | P2: {act2:5s} ({t2_elapsed:4.1f}ms) | Diem: P1={score1} - P2={score2}")
 
         if env.is_game_over():
             break
 
-    # Phân định thắng bại sau n bước
-    final_p1, final_p2 = env.get_scores()
-    print("-" * 70)
-    print("                    KET QUA CHUNG CUOC")
-    print("-" * 70)
-    print(f"  + Tong so buoc hoan thanh: {len(history_states) - 1} / {max_steps}")
-    print(f"  + Diem Player 1 (A):        {final_p1} hop tren dich (Thung 'C')")
-    print(f"  + Diem Player 2 (P):        {final_p2} hop tren dich (Thung 'K')")
+    # Tong ket ket qua tran dau
+    final_s1, final_s2 = env.get_scores()
+    print("\n" + "=" * 70)
+    print("                    KET QUA THI DAU CHUNG CUOC")
+    print("=" * 70)
+    print(f"[*] Tong so buoc da dau:  {env.current_step} / {max_steps}")
+    print(f"[*] Diem so Player 1:     {final_s1} diem (Thung Xam 'C')")
+    print(f"[*] Diem so Player 2:     {final_s2} diem (Thung Xanh 'K')")
 
-    if final_p1 > final_p2:
-        winner_text = "PLAYER 1 CHIEN THANG!"
-    elif final_p2 > final_p1:
-        winner_text = "PLAYER 2 CHIEN THANG!"
+    if final_s1 > final_s2:
+        print("[*] Ket luan:             PLAYER 1 (A* Search) CHIEN THANG!")
+    elif final_s2 > final_s1:
+        print("[*] Ket luan:             PLAYER 2 (Greedy Best-First) CHIEN THANG!")
     else:
-        winner_text = "KET QUA HOA NHAU!"
+        print("[*] Ket luan:             HAI BEN HOA NHAU!")
+    print("=" * 70)
 
-    print(f"  ==> {winner_text}")
-    print("-" * 70)
-
-    # Tự động khởi chạy giao diện Pygame hiển thị kết quả trận đấu
-    print("\n[*] Dang khoi dong giao dien Pygame truc quan...")
-    print("  - Phim [Space]:     Tam dung / Tiep tuc tu dong dien hoat")
-    print("  - Phim [->] Phai:   Buoc toi 1 luot (khi dang Pause)")
-    print("  - Phim [<-] Trai:   Lui lai 1 luot (khi dang Pause)")
-    print("  - Phim [ESC]:       Dong cua so\n")
-
-    view = SokobanView(title=f"AI Sokoban - Competitive Match ({final_p1} - {final_p2}) | n={max_steps}")
-    view.set_competitive_history(states=history_states, scores=history_scores, max_steps=max_steps)
-    view.run_interactive()
+    # Mo giao dien do hoa
+    print("\n[*] Dang mo giao dien Pygame...")
+    print("    [Space]: Tam dung / Tiep tuc | [->]: Buoc toi | [<-]: Lui buoc | [ESC]: Thoat")
+    view = SokobanView(title=f"AI Sokoban - Competitive Match ({final_s1} - {final_s2}) | n={max_steps}")
+    view.set_competitive_history(history_states, history_scores, max_steps)
+    view.run()
 
 
 if __name__ == "__main__":

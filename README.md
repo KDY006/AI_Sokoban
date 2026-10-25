@@ -49,7 +49,7 @@ Hệ thống hỗ trợ cả chế độ tương tác qua Menu console và chế
   # hoặc trên Windows:
   py main_single.py
   ```
-  - Bước 1: Nhập số thứ tự để chọn bản đồ (ví dụ: `1` cho `example_map.txt`, `8` cho `map_200.txt`, `9` cho `map_deadlock.txt`).
+  - Bước 1: Nhập số thứ tự để chọn bản đồ (ví dụ: `1` cho `example_map.txt`, `8` cho `map_200.txt`, `9` cho `map_deadlock.txt`, hoặc các map ngoại lệ).
   - Bước 2: Chọn thuật toán (`1`: UCS, `2`: A*).
   - Thuật toán sẽ tính toán lời giải, in số liệu thống kê ra console và tự động khởi chạy cửa sổ Pygame GUI.
 
@@ -76,13 +76,14 @@ Hệ thống hỗ trợ cả chế độ tương tác qua Menu console và chế
   ```bash
   py main_competitive.py
   ```
-  - Bước 1: Nhập số bước tối đa $n$ (mặc định 50 bước, có thể nhập `24`, `35`, `50`,...).
+  - Bước 1: Nhập số bước tối đa $n$ (mặc định 50 bước, có thể nhập `24`, `35`, `50`, `200`,...).
   - Bước 2: Chọn bản đồ thi đấu:
     - `1`: `competitive_map_v1.txt` - Đấu trường mở Arena Open Layout.
     - `2`: `competitive_map_v2.txt` - Đấu trường có trụ chướng ngại vật phân luồng Tactical Pillars.
   - Trận đấu diễn ra theo thời gian thực giữa Player 1 (Màu Xám / Áo Xám) và Player 2 (Màu Xanh / Áo Xanh).
   - Console hiển thị log thời gian thực tế từng bước (< 25 ms / bước, đạt chuẩn R7 $\le 1,000$ ms). Khi phát sinh xung đột cùng ô, hệ thống tự động kích hoạt cơ chế xác suất $p \sim \text{Uniform}(0, 1)$ theo R6.
   - Cửa sổ Pygame mở ra tái hiện lại toàn bộ trận đấu với màu sắc thùng phân biệt: Thùng của P1 vào đích (`C`) và Thùng của P2 vào đích (`K`).
+  - **Cơ chế AI Phá bĩnh**: Khi tất cả các ô đích bị chiếm hoặc bị dẫn điểm, Agent đang thua sẽ chủ động tìm thùng của đối phương và đẩy văng ra sàn để trừ điểm, mở lại ô đích và tiếp tục tranh chấp điểm số.
 
 * **Cách 2: Chạy với tham số dòng lệnh**
   ```bash
@@ -128,9 +129,9 @@ py -m experiments.verify_heuristic
 
 ---
 
-## 4. Bảng Ký hiệu Quy ước Bản đồ (Map Legends)
+## 4. Bảng Ký hiệu Quy ước Bản đồ & Danh mục Test Case
 
-### Chế độ Đơn tác nhân (Single-Agent - R1 đến R5)
+### 4.1. Chế độ Đơn tác nhân (Single-Agent - R1 đến R5)
 * `%` : Bức tường / Chướng ngại vật cố định (Wall).
 * ` ` : Ô sàn trống (Empty Floor).
 * `A` : Vị trí ban đầu của Người chơi (Agent).
@@ -139,7 +140,7 @@ py -m experiments.verify_heuristic
 * `D` : Điểm đích được chỉ định (Designated Goal).
 * `C` : Thùng gỗ đã nằm trên điểm đích (Box on Goal).
 
-### Chế độ Đối kháng Hai tác nhân (Competitive Two-Agent - R6 đến R8)
+### 4.2. Chế độ Đối kháng Hai tác nhân (Competitive Two-Agent - R6 đến R8)
 * `A` : Vị trí Player 1 (Màu Xám).
 * `P` : Vị trí Player 2 (Màu Xanh).
 * `B` : Thùng tự do trung lập (Cả hai bên đều có thể đẩy).

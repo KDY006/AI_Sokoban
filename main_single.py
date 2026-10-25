@@ -1,12 +1,7 @@
 """
 Module: main_single.py
-Mục đích: Điểm khởi chạy chính cho chế độ Đơn tác nhân (Single-Agent - R5).
-Tính năng:
-  - Cho phép người dùng chọn bản đồ (danh sách maps/ hoặc nhập file tùy ý).
-  - Cho phép lựa chọn thuật toán giải: UCS hoặc A* (Heuristic Hungarian BFS).
-  - Đo lường và in thống kê hiệu năng chi tiết (Thời gian ms, Chi phí, Số node mở rộng, Bộ nhớ Frontier).
-  - Tái tạo chuỗi trạng thái 2D và khởi chạy giao diện đồ họa trực quan Pygame.
-  - Hỗ trợ các phím điều khiển: Space (Tạm dừng/Tiếp tục), -> (Bước tới), <- (Lùi bước), ESC (Thoát).
+Mo ta: Khoi chay chuong trinh giai Sokoban che do Don tac nhan (Single-Agent).
+Doc ban do, chay thuat toan tim kiem (UCS hoac A*), in thong ke va mo giao dien Pygame.
 """
 
 import os
@@ -14,14 +9,12 @@ import sys
 import argparse
 from typing import List, Tuple, FrozenSet
 
-# Đảm bảo console UTF-8 trên Windows
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
 
-# Thêm thư mục gốc vào PYTHONPATH
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
@@ -40,16 +33,7 @@ def state_to_grid(
     max_row: int,
     max_col: int
 ) -> List[List[str]]:
-    """
-    Chuyển đổi đối tượng State thành ma trận lưới 2D ký tự chuẩn theo quy ước đề bài:
-      '%' : Tường
-      'A' : Người chơi
-      '+' : Người chơi đứng trên ô đích
-      'B' : Hộp chưa vào đích
-      'C' : Hộp đã nằm trên ô đích
-      'D' : Ô đích trống
-      ' ' : Sàn trống
-    """
+    # Chuyen doi State thanh ma tran 2D phuc vu hien thi GUI
     grid = [[" " for _ in range(max_col)] for _ in range(max_row)]
 
     for r, c in walls:
@@ -72,7 +56,7 @@ def state_to_grid(
 
 
 def get_available_maps() -> List[str]:
-    """Lấy danh sách các file bản đồ hợp lệ trong thư mục maps/."""
+    # Lay danh sach file ban do trong thu muc maps/
     maps_dir = os.path.join(BASE_DIR, "maps")
     valid_maps = []
     if os.path.exists(maps_dir):
@@ -85,7 +69,7 @@ def get_available_maps() -> List[str]:
 
 
 def interactive_select_options() -> Tuple[str, str]:
-    """Hiển thị menu tương tác trên console để người dùng chọn map và thuật toán."""
+    # Hien thi menu chon ban do va thuat toan
     maps = get_available_maps()
     print("=" * 65)
     print("        HE THONG GIAI SOKOBAN DON TAC NHAN (SINGLE-AGENT)")
@@ -115,9 +99,9 @@ def interactive_select_options() -> Tuple[str, str]:
         if os.path.exists(choice_map):
             selected_map = choice_map
 
-    print("\n--- [BUOC 2] CHON THUAT TOAN TIM KIEM (YEU CAU 5) ---")
-    print("  1. UCS  - Uniform Cost Search (Tim kiem chi phi dong nhat)")
-    print("  2. A*   - A* Search (Heuristic Hungarian BFS - Khong dung Manhattan/Euclidean)")
+    print("\n--- [BUOC 2] CHON THUAT TOAN TIM KIEM ---")
+    print("  1. UCS  - Uniform Cost Search")
+    print("  2. A*   - A* Search (Hungarian BFS Heuristic)")
     choice_algo = input("\nChon thuat toan [1/2] (Mac dinh 2 - A*): ").strip()
 
     selected_algo = "A*" if choice_algo in ["2", "astar", "A*", "a*"] else "UCS"
@@ -128,12 +112,11 @@ def interactive_select_options() -> Tuple[str, str]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Chuong trinh giai Sokoban Single-Agent (R5)")
+    parser = argparse.ArgumentParser(description="Chuong trinh giai Sokoban Single-Agent")
     parser.add_argument("--map", type=str, default=None, help="Duong dan file ban do")
     parser.add_argument("--algo", type=str, choices=["ucs", "astar", "UCS", "A*"], default=None, help="Thuat toan: ucs hoac astar")
     args = parser.parse_args()
 
-    # Xác định map và thuật toán
     if args.map is not None and args.algo is not None:
         map_file = args.map
         algo_name = "A*" if args.algo.lower() == "astar" else "UCS"
@@ -149,72 +132,73 @@ def main():
     print(f"[*] Thuat toan:     {algo_name}")
     print("=" * 65)
 
-    # Đọc bản đồ
+    # Doc file ban do
     try:
         init_state, walls, goals, max_row, max_col = parse_map(map_file)
     except Exception as e:
         print(f"[X] Loi doc ban do: {e}")
         return
 
+    num_boxes = len(init_state.boxes_pos)
+    num_goals = len(goals)
+
+    # Kiem tra cac truong hop bat kha thi ban dau
+    if num_goals == 0:
+        print("[!] Ban do khong co o dich. Ket thuc an toan.")
+        return
+
+    if num_boxes == 0:
+        print("[!] Ban do khong co hop. Ket thuc an toan.")
+        return
+
+    if num_boxes < num_goals:
+        print(f"[!] So hop ({num_boxes}) it hon so o dich ({num_goals}). Ket thuc an toan.")
+        return
+
+    if num_boxes > num_goals:
+        print(f"[*] Ban do du thung: {num_boxes} hop cho {num_goals} dich.")
+
     problem = SokobanProblem(init_state, walls, goals)
     print(f"[*] Kich thuoc me cung: {max_row} hang x {max_col} cot")
-    print(f"[*] So luong hop/dich:  {len(goals)} hop")
-    print(f"[*] Dang thuc thi giai thuat {algo_name}...")
+    print(f"[*] So luong hop/dich:  {num_boxes} hop / {num_goals} dich")
+    print(f"[*] Dang chay giai thuat {algo_name}...")
 
-    # Chạy thuật toán đã chọn
+    # Chay thuat toan tim kiem
     if algo_name == "UCS":
         actions, cost, stats = ucs_search(problem)
     else:
         actions, cost, stats = astar_search(problem)
 
-    # Hiển thị thống kê
     print("\n" + "-" * 65)
     print("                    KET QUA TIM KIEM")
     print("-" * 65)
     if actions is None:
-        print("[!] KET QUA: KHONG TIM THAY LOI GIAI (UNSOLVABLE MAP / DEADLOCK)!")
-        print(f"  + Trang thai:            BE TAC (Hop bi ket goc chet hoac khong co duong toi dich)")
-        print(f"  + So node da mo rong:    {stats.get('expanded_nodes', 0):,}")
-        print(f"  + Bo nho Frontier dinh:  {stats.get('max_frontier_size', 0):,}")
-        print(f"  + Thoi gian chay:        {stats.get('time_ms', 0):.2f} ms")
-        print("  => Giai thuat da dung lai an toan va khong mo giao dien dien hoat Replay.")
-        print("-" * 65)
-        return
+        print("[!] Khong tim thay loi giai. Ket thuc an toan.")
+        print(f"  - So node da mo rong:    {stats.get('expanded_nodes', 0):,}")
+        print(f"  - Bo nho Frontier dinh:  {stats.get('max_frontier_size', 0):,}")
+        print(f"  - Thoi gian chay:        {stats.get('time_ms', 0):.2f} ms")
+    else:
+        print("[OK] Tim thay loi giai thanh cong:")
+        print(f"  - So buoc hanh dong:     {len(actions):,} buoc")
+        print(f"  - Tong chi phi:          {cost}")
+        print(f"  - So node da mo rong:    {stats.get('expanded_nodes', 0):,}")
+        print(f"  - Bo nho Frontier dinh:  {stats.get('max_frontier_size', 0):,}")
+        print(f"  - Thoi gian chay:        {stats.get('time_ms', 0):.2f} ms")
+        print(f"  - Chuoi hanh dong:       {', '.join(actions[:10])}{' ...' if len(actions) > 10 else ''}")
 
-    print(f"  + Trang thai:            THANH CONG (Da tim ra loi giai toi uu)")
-    print(f"  + Tong chi phi (Cost):   {cost}")
-    print(f"  + So buoc di chuyen:     {len(actions)}")
-    print(f"  + So node da mo rong:    {stats.get('expanded_nodes', 0):,}")
-    print(f"  + Bo nho Frontier dinh:  {stats.get('max_frontier_size', 0):,}")
-    print(f"  + Thoi gian thuc thi:    {stats.get('time_ms', 0):.2f} ms")
-    
-    # In chuỗi hành động rút gọn
-    act_str = " -> ".join(actions[:15])
-    if len(actions) > 15:
-        act_str += f" ... va {len(actions) - 15} buoc nua"
-    print(f"  + Lo trinh di chuyen:    {act_str}")
-    print("-" * 65)
+        # Tai tao chuoi trang thai grid 2D cho Replay
+        states_for_view = [state_to_grid(init_state, walls, goals, max_row, max_col)]
+        curr_state = init_state
+        for act in actions:
+            curr_state, _ = problem.get_successor(curr_state, act)
+            states_for_view.append(state_to_grid(curr_state, walls, goals, max_row, max_col))
 
-    # Tái tạo chuỗi trạng thái lưới 2D cho GUI
-    history_grids = []
-    curr_state = init_state
-    history_grids.append(state_to_grid(curr_state, walls, goals, max_row, max_col))
-
-    for act in actions:
-        next_state, _ = problem.get_successor(curr_state, act)
-        history_grids.append(state_to_grid(next_state, walls, goals, max_row, max_col))
-        curr_state = next_state
-
-    # Tự động khởi chạy Pygame GUI khi có kết quả
-    print("\n[*] Dang khoi dong giao dien Pygame truc quan...")
-    print("  - Phim [Space]:     Tam dung / Tiep tuc tu dong chay")
-    print("  - Phim [->] Phai:   Buoc toi 1 buoc (khi dang Pause)")
-    print("  - Phim [<-] Trai:   Lui lai 1 buoc (khi dang Pause)")
-    print("  - Phim [ESC]:       Dong cua so\n")
-
-    view = SokobanView(title=f"AI Sokoban - Single Agent ({algo_name}) | {os.path.basename(map_file)}")
-    view.set_states(history_grids, algorithm=algo_name)
-    view.run_interactive()
+        # Mo giao dien do hoa
+        print("\n[*] Dang mo giao dien Pygame...")
+        print("    [Space]: Tam dung / Tiep tuc | [->]: Buoc toi | [<-]: Lui buoc | [ESC]: Thoat")
+        view = SokobanView(title=f"AI Sokoban - {os.path.basename(map_file)} | {algo_name}")
+        view.set_states(states_for_view, algorithm=algo_name)
+        view.run()
 
 
 if __name__ == "__main__":

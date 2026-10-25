@@ -1,5 +1,5 @@
-Map,Optimal_Cost_h_star,Initial_h,Admissible_S0,Goal_h_Zero,Path_States_Tested,Admissible_Overall,Transitions_Tested,Max_Delta_h,Min_Delta_h,Inconsistent_Count,Consistent_Overall
-example_map.txt,34,8.0,True,True,34,PASS,2001,1.0,-1.0,0,PASS
-map_02_two_boxes.txt,7,3.0,True,True,7,PASS,2000,1.0,-1.0,0,PASS
-map_03_three_boxes.txt,14,7.0,True,True,14,PASS,2002,1.0,-1.0,0,PASS
-map_04_four_boxes.txt,23,12.0,True,True,23,PASS,2000,1.0,-1.0,0,PASS
+Map,h_start,h_star,Admissibility,Transitions_Tested,Max_Delta_h,Consistency
+example_map.txt,8.0,34,PASS,2001,1.0,PASS
+map_02_two_boxes.txt,3.0,7,PASS,2001,1.0,PASS
+map_03_three_boxes.txt,7.0,14,PASS,2001,1.0,PASS
+map_04_four_boxes.txt,12.0,23,PASS,2001,1.0,PASS

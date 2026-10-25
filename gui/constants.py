@@ -1,17 +1,21 @@
-# gui/constants.py
+"""
+Module: gui/constants.py
+Mo ta: Dinh nghia cac hang so giao dien: kich thuoc o luoi, toc do khung hinh, bang mau va phim dieu khien.
+"""
+
 import pygame
 
-# 1. Kích thước ô lưới và tốc độ khung hình
-TILE_SIZE = 64  # Mỗi ô trên map có kích thước 64x64 pixel
-FPS = 60        # 60 khung hình/giây
+# Kich thuoc o luoi va toc do khung hinh
+TILE_SIZE = 64
+FPS = 60
 
-# 2. Bảng màu RGB hiển thị
-COLOR_BG = (35, 39, 42)          # Màu nền tối
-COLOR_TEXT = (255, 255, 255)      # Chữ màu trắng
-COLOR_PANEL = (44, 47, 51)        # Khung viền/thông tin
-COLOR_STATUS = (0, 255, 127)      # Màu chữ trạng thái (xanh lá)
+# Bang mau RGB
+COLOR_BG = (35, 39, 42)
+COLOR_TEXT = (255, 255, 255)
+COLOR_PANEL = (44, 47, 51)
+COLOR_STATUS = (0, 255, 127)
 
-# 3. Cấu hình các phím điều khiển (Yêu cầu đề bài)
-KEY_PAUSE = pygame.K_SPACE        # Space: Tạm dừng / Tiếp tục
-KEY_FORWARD = pygame.K_RIGHT      # Mũi tên phải: Bước tới (Forward)
-KEY_BACKWARD = pygame.K_LEFT      # Mũi tên trái: Tua lùi (Backward)
+# Phim dieu khien
+KEY_PAUSE = pygame.K_SPACE
+KEY_FORWARD = pygame.K_RIGHT
+KEY_BACKWARD = pygame.K_LEFT

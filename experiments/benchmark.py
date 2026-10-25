@@ -1,12 +1,6 @@
 """
 Module: experiments/benchmark.py
-Phụ trách: Quý
-Mô tả: Script thực nghiệm đối chiếu Time & Space Complexity giữa UCS và A* (R3).
-       Đo đạc:
-         - Thời gian chạy (Execution Time ms)
-         - Số node mở rộng (Nodes Expanded)
-         - Bộ nhớ đỉnh Frontier (Peak Frontier Memory / Space Complexity)
-       Xuất bảng số liệu CSV và biểu đồ đối chiếu trực quan (PNG).
+Mo ta: Thuc nghiem so sanh hieu nang (thoi gian, so node mo rong, bo nho frontier) giua UCS va A*.
 """
 
 import os
@@ -15,14 +9,12 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Đảm bảo console Windows không bị lỗi bảng mã cp1252 khi UCS in log tiếng Việt
 if hasattr(sys.stdout, 'reconfigure'):
     try:
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     except Exception:
         pass
 
-# Đảm bảo đường dẫn import từ thư mục gốc dự án
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.state import parse_map
@@ -38,7 +30,6 @@ def run_benchmark(map_files=None):
 
     if map_files is None:
         maps_dir = os.path.join(base_dir, 'maps')
-        # Danh sách các map chuẩn dùng để đối chiếu Time & Space Complexity (R3)
         benchmark_target_maps = [
             'map_deadlock.txt',
             'map_02_two_boxes.txt',
@@ -48,135 +39,142 @@ def run_benchmark(map_files=None):
         candidate_files = []
         for mname in benchmark_target_maps:
             fpath = os.path.join(maps_dir, mname)
-            if os.path.exists(fpath) and os.path.getsize(fpath) > 0:
+            if os.path.exists(fpath):
                 candidate_files.append(fpath)
-        map_files = candidate_files
 
-    if not map_files:
-        print("[-] Không tìm thấy file bản đồ hợp lệ nào trong thư mục maps/.")
-        return
+        map_files = candidate_files if candidate_files else [
+            os.path.join(maps_dir, f) for f in os.listdir(maps_dir)
+            if f.endswith('.txt') and not f.startswith('competitive_map')
+        ]
 
-    results = []
+    benchmark_data = []
 
     print("=" * 80)
     print("           BENCHMARK SO SANH HIEU NANG: UCS vs A* (HUNGARIAN BFS)")
     print("=" * 80)
 
-    for map_file in map_files:
-        map_name = os.path.basename(map_file)
-        print(f"\n[*] Dang chay thuc nghiem tren: {map_name} ...")
+    for fpath in map_files:
+        mname = os.path.basename(fpath)
+        print(f"\n[*] Dang chay thuc nghiem tren: {mname} ...")
 
         try:
-            init_state, walls, goals, r, c = parse_map(map_file)
+            init_state, walls, goals, r, c = parse_map(fpath)
         except Exception as e:
-            print(f"[-] Bo qua {map_name} do loi doc file: {e}")
+            print(f"[-] Bo qua {mname} do loi: {e}")
             continue
 
-        # 1. Chạy Uniform Cost Search (UCS)
-        prob_ucs = SokobanProblem(init_state, walls, goals)
-        act_ucs, cost_ucs, stats_ucs = ucs_search(prob_ucs)
+        # Kiem tra ban do co du thung de giai khong
+        if len(init_state.boxes_pos) < len(goals):
+            continue
 
-        # 2. Chạy A* Search
-        prob_astar = SokobanProblem(init_state, walls, goals)
-        act_astar, cost_astar, stats_astar = astar_search(prob_astar)
+        problem_ucs = SokobanProblem(init_state, walls, goals)
+        problem_astar = SokobanProblem(init_state, walls, goals)
 
-        # Tính toán tỷ lệ tối ưu / cải thiện
-        node_ratio = round(stats_ucs['expanded_nodes'] / max(1, stats_astar['expanded_nodes']), 2)
-        speedup = round(stats_ucs['time_ms'] / max(0.001, stats_astar['time_ms']), 2)
+        # Chay thuat toan UCS
+        ucs_actions, ucs_cost, ucs_stats = ucs_search(problem_ucs)
+
+        # Chay thuat toan A*
+        astar_actions, astar_cost, astar_stats = astar_search(problem_astar)
 
         row = {
-            'Map': map_name,
-            'Boxes': len(goals),
-            'Cost_UCS': cost_ucs if act_ucs is not None else 'Unsolvable',
-            'Cost_AStar': cost_astar if act_astar is not None else 'Unsolvable',
-            'Optimal_Match': (cost_ucs == cost_astar),
-            'UCS_Nodes': stats_ucs['expanded_nodes'],
-            'AStar_Nodes': stats_astar['expanded_nodes'],
-            'Node_Reduction_Ratio': node_ratio,
-            'UCS_Peak_Frontier': stats_ucs['max_frontier_size'],
-            'AStar_Peak_Frontier': stats_astar['max_frontier_size'],
-            'UCS_Time_ms': round(stats_ucs['time_ms'], 2),
-            'AStar_Time_ms': round(stats_astar['time_ms'], 2),
-            'Speedup': speedup
+            "Map": mname,
+            "Goals": len(goals),
+            "UCS_Cost": ucs_cost if ucs_actions is not None else "Unsolvable",
+            "AStar_Cost": astar_cost if astar_actions is not None else "Unsolvable",
+            "UCS_Nodes": ucs_stats["expanded_nodes"],
+            "AStar_Nodes": astar_stats["expanded_nodes"],
+            "UCS_Frontier": ucs_stats["max_frontier_size"],
+            "AStar_Frontier": astar_stats["max_frontier_size"],
+            "UCS_Time_ms": round(ucs_stats["time_ms"], 2),
+            "AStar_Time_ms": round(astar_stats["time_ms"], 2)
         }
-        results.append(row)
+        benchmark_data.append(row)
 
-        print(f"  + UCS   : Cost = {row['Cost_UCS']} | Nodes = {stats_ucs['expanded_nodes']:,} | Peak Frontier = {stats_ucs['max_frontier_size']:,} | Time = {stats_ucs['time_ms']:.2f} ms")
-        print(f"  + A*    : Cost = {row['Cost_AStar']} | Nodes = {stats_astar['expanded_nodes']:,} | Peak Frontier = {stats_astar['max_frontier_size']:,} | Time = {stats_astar['time_ms']:.2f} ms")
-        print(f"  => A* giam {node_ratio}x so node duyet, nhanh hon {speedup}x so voi UCS.")
+        print(f"  + UCS   : Cost = {row['UCS_Cost']} | Nodes = {row['UCS_Nodes']:,} | Peak Frontier = {row['UCS_Frontier']:,} | Time = {row['UCS_Time_ms']:.2f} ms")
+        print(f"  + A*    : Cost = {row['AStar_Cost']} | Nodes = {row['AStar_Nodes']:,} | Peak Frontier = {row['AStar_Frontier']:,} | Time = {row['AStar_Time_ms']:.2f} ms")
 
-    if not results:
-        print("[-] Khong co ket qua thuc nghiem nao duoc ghi nhan.")
-        return
+        if astar_stats["expanded_nodes"] > 0:
+            reduction = ucs_stats["expanded_nodes"] / astar_stats["expanded_nodes"]
+            speedup = ucs_stats["time_ms"] / max(astar_stats["time_ms"], 0.001)
+            print(f"  => A* giam {reduction:.1f}x so node duyet, nhanh hon {speedup:.2f}x so voi UCS.")
 
-    # 1. Xuất dữ liệu ra file CSV
-    csv_file = os.path.join(results_dir, 'benchmark_results.csv')
-    with open(csv_file, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=results[0].keys())
+    # Luu ket qua ra tap tin CSV
+    csv_file = os.path.join(results_dir, "benchmark_results.csv")
+    fieldnames = [
+        "Map", "Goals", "UCS_Cost", "AStar_Cost",
+        "UCS_Nodes", "AStar_Nodes", "UCS_Frontier", "AStar_Frontier",
+        "UCS_Time_ms", "AStar_Time_ms"
+    ]
+    with open(csv_file, mode="w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(results)
+        writer.writerows(benchmark_data)
     print(f"\n[+] Da luu bang so lieu CSV: {csv_file}")
 
-    # 2. Vẽ biểu đồ đối chiếu trực quan (PNG)
-    maps = [r['Map'].replace('.txt', '') for r in results]
-    # Dùng max(val, 0.5) để log scale không bị lỗi âm vô cực khi val = 0
-    ucs_nodes = [max(0.5, r['UCS_Nodes']) for r in results]
-    astar_nodes = [max(0.5, r['AStar_Nodes']) for r in results]
+    # Ve bieu do so sanh
+    plot_benchmark_charts(benchmark_data, results_dir)
 
-    ucs_mem = [max(0.5, r['UCS_Peak_Frontier']) for r in results]
-    astar_mem = [max(0.5, r['AStar_Peak_Frontier']) for r in results]
 
-    ucs_times = [max(0.01, r['UCS_Time_ms']) for r in results]
-    astar_times = [max(0.01, r['AStar_Time_ms']) for r in results]
+def plot_benchmark_charts(data, results_dir):
+    if not data:
+        return
 
+    # Loc cac map co loi giai de ve bieu do
+    solvable_data = [d for d in data if d["AStar_Cost"] != "Unsolvable"]
+    if not solvable_data:
+        solvable_data = data
+
+    maps = [d["Map"] for d in solvable_data]
     x = np.arange(len(maps))
     width = 0.35
 
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+    ucs_nodes = [max(d["UCS_Nodes"], 1) for d in solvable_data]
+    astar_nodes = [max(d["AStar_Nodes"], 1) for d in solvable_data]
 
-    # Đồ thị 1: Số lượng Node mở rộng (Nodes Expanded - Log scale)
-    ax1 = axes[0]
-    ax1.bar(x - width/2, ucs_nodes, width, label='UCS', color='#E74C3C', alpha=0.9)
-    ax1.bar(x + width/2, astar_nodes, width, label='A* (Hungarian BFS)', color='#2980B9', alpha=0.9)
-    ax1.set_title('Số Node mở rộng (Nodes Expanded - Log Scale)', fontsize=11, fontweight='bold')
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(maps, rotation=15, ha='right')
-    ax1.set_ylabel('Nodes (Log Scale)')
-    ax1.set_yscale('log')
-    ax1.legend()
-    ax1.grid(axis='y', linestyle='--', alpha=0.6)
+    ucs_mem = [max(d["UCS_Frontier"], 1) for d in solvable_data]
+    astar_mem = [max(d["AStar_Frontier"], 1) for d in solvable_data]
 
-    # Đồ thị 2: Bộ nhớ đỉnh Frontier (Space Complexity - Log scale)
-    ax2 = axes[1]
-    ax2.bar(x - width/2, ucs_mem, width, label='UCS', color='#E67E22', alpha=0.9)
-    ax2.bar(x + width/2, astar_mem, width, label='A* (Hungarian BFS)', color='#27AE60', alpha=0.9)
-    ax2.set_title('Bộ nhớ đỉnh Frontier (Peak Frontier Size - Log Scale)', fontsize=11, fontweight='bold')
-    ax2.set_xticks(x)
-    ax2.set_xticklabels(maps, rotation=15, ha='right')
-    ax2.set_ylabel('Max Frontier Size (Log Scale)')
-    ax2.set_yscale('log')
-    ax2.legend()
-    ax2.grid(axis='y', linestyle='--', alpha=0.6)
+    ucs_time = [d["UCS_Time_ms"] for d in solvable_data]
+    astar_time = [d["AStar_Time_ms"] for d in solvable_data]
 
-    # Đồ thị 3: Thời gian thực thi (Time ms - Log scale)
-    ax3 = axes[2]
-    ax3.bar(x - width/2, ucs_times, width, label='UCS', color='#8E44AD', alpha=0.9)
-    ax3.bar(x + width/2, astar_times, width, label='A* (Hungarian BFS)', color='#16A085', alpha=0.9)
-    ax3.set_title('Thời gian chạy (Execution Time ms - Log Scale)', fontsize=11, fontweight='bold')
-    ax3.set_xticks(x)
-    ax3.set_xticklabels(maps, rotation=15, ha='right')
-    ax3.set_ylabel('Thời gian (ms, Log Scale)')
-    ax3.set_yscale('log')
-    ax3.legend()
-    ax3.grid(axis='y', linestyle='--', alpha=0.6)
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+    # Bieu do 1: So node da mo rong (Log-Scale)
+    axes[0].bar(x - width/2, ucs_nodes, width, label='UCS', color='#e74c3c')
+    axes[0].bar(x + width/2, astar_nodes, width, label='A* (Hungarian BFS)', color='#2ecc71')
+    axes[0].set_yscale('log')
+    axes[0].set_title('So Node da mo rong (Log Scale)')
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(maps, rotation=15, ha='right')
+    axes[0].legend()
+    axes[0].grid(True, linestyle='--', alpha=0.5)
+
+    # Bieu do 2: Bo nho Frontier dinh (Log-Scale)
+    axes[1].bar(x - width/2, ucs_mem, width, label='UCS', color='#e67e22')
+    axes[1].bar(x + width/2, astar_mem, width, label='A* (Hungarian BFS)', color='#3498db')
+    axes[1].set_yscale('log')
+    axes[1].set_title('Bo nho Frontier dinh (Log Scale)')
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels(maps, rotation=15, ha='right')
+    axes[1].legend()
+    axes[1].grid(True, linestyle='--', alpha=0.5)
+
+    # Bieu do 3: Thoi gian thuc thi (ms)
+    axes[2].bar(x - width/2, ucs_time, width, label='UCS', color='#9b59b6')
+    axes[2].bar(x + width/2, astar_time, width, label='A* (Hungarian BFS)', color='#1abc9c')
+    axes[2].set_title('Thoi gian thuc thi (ms)')
+    axes[2].set_xticks(x)
+    axes[2].set_xticklabels(maps, rotation=15, ha='right')
+    axes[2].legend()
+    axes[2].grid(True, linestyle='--', alpha=0.5)
 
     plt.tight_layout()
-    chart_path = os.path.join(results_dir, 'benchmark_chart.png')
-    plt.savefig(chart_path, dpi=300)
+    chart_file = os.path.join(results_dir, 'benchmark_chart.png')
+    plt.savefig(chart_file, dpi=300)
     plt.close()
-    print(f"[+] Đã xuất biểu đồ đối chiếu: {chart_path}")
+    print(f"[+] Da xuat bieu do doi chieu: {chart_file}")
     print("=" * 80)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_benchmark()

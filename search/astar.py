@@ -1,9 +1,6 @@
 """
 Module: search/astar.py
-Phụ trách: Quý
-Mô tả: Cài đặt thuật toán A* cho bài toán Sokoban (R2).
-       Sử dụng hàm Heuristic h(n) được mô-đun hóa tại search/heuristic.py
-       (Min-Cost Bipartite Matching kết hợp Hungarian BFS).
+Mo ta: Cai dat thuat toan A* Search su dung ham Heuristic Hungarian BFS de tim loi giai toi uu cho Sokoban.
 """
 
 import heapq
@@ -18,10 +15,6 @@ __all__ = ["astar_search", "AStarNode", "SokobanHeuristic"]
 
 
 class AStarNode:
-    """
-    Nút trên cây tìm kiếm A* (Search Node).
-    Lưu trữ trạng thái, đường đi và các giá trị hàm đánh giá: f = g + h.
-    """
     def __init__(
         self,
         state: State,
@@ -44,17 +37,10 @@ class AStarNode:
 
 
 def astar_search(problem: SokobanProblem) -> Tuple[Optional[List[str]], int, Dict]:
-    """
-    Thực thi giải thuật A* Search với Heuristic Hungarian BFS.
-    Đầu ra chuẩn:
-        - actions: Danh sách hành động ['North', 'East', ...] hoặc None
-        - total_cost: Tổng chi phí đường đi tối ưu
-        - stats: Thống kê thực nghiệm (số node mở rộng, bộ nhớ đỉnh frontier, thời gian chạy ms)
-    """
     start_time = time.perf_counter()
     heuristic_engine = SokobanHeuristic(problem)
 
-    # Khởi tạo trạng thái ban đầu
+    # Tinh heuristic cho trang thai ban dau
     h0 = heuristic_engine.calculate(problem.initial_state)
     if h0 == float('inf'):
         end_time = time.perf_counter()
@@ -77,12 +63,11 @@ def astar_search(problem: SokobanProblem) -> Tuple[Optional[List[str]], int, Dic
         h_cost=h0
     )
 
-    # Priority queue lưu tuple: (f_cost, h_cost, counter, node)
     counter = 0
     frontier: List[Tuple[float, float, int, AStarNode]] = []
     heapq.heappush(frontier, (start_node.f_cost, start_node.h_cost, counter, start_node))
 
-    # Bảng lưu g_cost nhỏ nhất đã tìm thấy tới từng State
+    # Bang luu g_cost nho nhat toi tung State
     cost_so_far: Dict[State, int] = {problem.initial_state: 0}
 
     expanded_nodes = 0
@@ -94,17 +79,17 @@ def astar_search(problem: SokobanProblem) -> Tuple[Optional[List[str]], int, Dic
         current_f, current_h, _, current_node = heapq.heappop(frontier)
         current_state = current_node.state
 
-        # Nếu đã tìm thấy đường đi tới current_state với g_cost tốt hơn trước đó -> Bỏ qua
+        # Bo qua neu da co duong di toi state voi g_cost tot hon
         if current_node.g_cost > cost_so_far.get(current_state, float('inf')):
             continue
 
-        # In log định kỳ mỗi 3 giây nếu tìm kiếm lâu
+        # In log tien do dinh ky neu tim kiem lau
         now = time.perf_counter()
         if now - last_print_time > 3.0:
             print(f"[A* exploring...] Expanded: {expanded_nodes:,} | Frontier: {len(frontier):,} | f: {current_f:.1f} (g={current_node.g_cost}, h={current_h:.1f})")
             last_print_time = now
 
-        # Goal Test: Kiểm tra đích khi LẤY NODE RA khỏi Frontier
+        # Kiem tra dich khi lay node ra khoi frontier
         if problem.is_goal(current_state):
             end_time = time.perf_counter()
             elapsed_ms = (end_time - start_time) * 1000
@@ -128,16 +113,16 @@ def astar_search(problem: SokobanProblem) -> Tuple[Optional[List[str]], int, Dic
 
         expanded_nodes += 1
 
-        # Mở rộng các trạng thái kế tiếp
+        # Mo rong cac trang thai ke tiep
         for action in problem.get_actions(current_state):
             next_state, step_cost = problem.get_successor(current_state, action)
             new_g = current_node.g_cost + step_cost
 
-            # Chỉ duyệt tiếp nếu tìm được đường đi ngắn hơn (g nhỏ hơn)
+            # Kiem tra va them vao frontier neu toi uu hon
             if next_state not in cost_so_far or new_g < cost_so_far[next_state]:
                 h_val = heuristic_engine.calculate(next_state)
 
-                # Cắt tỉa nhánh bế tắc (Deadlock Pruning)
+                # Cat tia nhanh be tac (deadlock)
                 if h_val == float('inf'):
                     continue
 
@@ -152,7 +137,7 @@ def astar_search(problem: SokobanProblem) -> Tuple[Optional[List[str]], int, Dic
                 )
                 heapq.heappush(frontier, (child_node.f_cost, child_node.h_cost, counter, child_node))
 
-    # Không tìm thấy đường đi
+    # Khong tim thay loi giai
     end_time = time.perf_counter()
     elapsed_ms = (end_time - start_time) * 1000
     stats = {

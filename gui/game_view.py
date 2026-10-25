@@ -1,3 +1,8 @@
+"""
+Module: gui/game_view.py
+Mo ta: Lop SokobanView quan ly giao dien do hoa Pygame cho che do don tac nhan va doi khang.
+"""
+
 import pygame
 import os
 import sys
@@ -6,18 +11,8 @@ from gui.constants import (
     KEY_PAUSE, KEY_FORWARD, KEY_BACKWARD
 )
 
+
 class SokobanView:
-    """
-    Game Engine & Pygame Visualization.
-    Quy uoc ky hieu ban do theo de bai:
-      '%' : Wall / Obstacles
-      'A' : Player 1 (the man)
-      'P' : Player 2 (Che do doi khang 2 Agent)
-      'B' : Box (Thung)
-      'D' : Goal (Diem dich dat thung)
-      'C' : Box on Goal (Thung da nam tren diem dich)
-      ' ' : Blank cell (San nha)
-    """
     def __init__(self, title="AI Sokoban Visualization"):
         pygame.init()
         pygame.font.init()
@@ -25,15 +20,15 @@ class SokobanView:
         self.font = pygame.font.SysFont("Consolas", 18, bold=True)
         self.small_font = pygame.font.SysFont("Consolas", 13)
         self.clock = pygame.time.Clock()
-        
+
         self.history_states = []
         self.current_step = 0
         self.is_paused = True
         self.running = False
-        self.algorithm_name = "UCS"  # Mac dinh: UCS hoac A*
-        self.mode = "single"  # "single" hoac "competitive"
-        self.history_scores = []  # Luu lich su diem [p1_score, p2_score] theo tung buoc
-        self.max_steps = 0  # So buoc n nguoi dung nhap
+        self.algorithm_name = "UCS"
+        self.mode = "single"
+        self.history_scores = []
+        self.max_steps = 0
 
         self.screen = None
         self.grid_width = 0
@@ -42,7 +37,7 @@ class SokobanView:
         self.sprites = {}
 
     def _load_sprites(self):
-        """Nap bo anh tu thu muc gui/assets neu co."""
+        # Nap bo anh tu thu muc gui/assets
         assets_dir = os.path.join(os.path.dirname(__file__), "assets")
         elements = ["player", "player2", "box", "box_docked", "box_p2", "target", "wall", "floor"]
         for elem in elements:
@@ -66,15 +61,15 @@ class SokobanView:
         return [list(line.ljust(max_len)) for line in lines]
 
     def set_states(self, states, algorithm="UCS"):
-        """Nhan chuoi trang thai va ten thuat toan (UCS hoac A*)."""
+        # Thiet lap lich su trang thai cho che do don tac nhan
         self.history_states = states
         self.current_step = 0
         self.algorithm_name = algorithm
         if states:
             self._setup_screen(states[0])
-            
+
     def set_competitive_history(self, states, scores, max_steps):
-        """Nhan chuoi trang thai va diem so cho che do doi khang 2 Agent."""
+        # Thiet lap lich su trang thai cho che do doi khang 2 tac nhan
         self.mode = "competitive"
         self.history_states = states
         self.history_scores = scores
@@ -87,47 +82,47 @@ class SokobanView:
         grid = sample_state.grid if hasattr(sample_state, 'grid') else sample_state
         self.grid_height = len(grid)
         self.grid_width = len(grid[0]) if self.grid_height > 0 else 0
-        
+
         screen_w = max(self.grid_width * TILE_SIZE, 640)
         screen_h = self.grid_height * TILE_SIZE + self.panel_height
         self.screen = pygame.display.set_mode((screen_w, screen_h))
         pygame.display.set_caption(self.title)
-        
-        # Load sprite sau khi da co display surface
+
         self._load_sprites()
 
     def draw_cell(self, char, x, y):
+        # Ve mot o tren luoi ban do
         rect = pygame.Rect(x, y, TILE_SIZE, TILE_SIZE)
-        
-        # 1. Ve san nha (Blank cells)
+
+        # San nha
         if self.sprites.get("floor"):
             self.screen.blit(self.sprites["floor"], (x, y))
         else:
             pygame.draw.rect(self.screen, (40, 44, 52), rect)
             pygame.draw.rect(self.screen, (55, 60, 70), rect, 1)
 
-        # 2. Tuong: Ky tu '%'
+        # Tuong
         if char == "%":
             if self.sprites.get("wall"):
                 self.screen.blit(self.sprites["wall"], (x, y))
             else:
                 pygame.draw.rect(self.screen, (90, 95, 105), rect)
 
-        # 3. Diem dich: Ky tu 'D'
+        # Diem dich
         elif char == "D":
             if self.sprites.get("target"):
                 self.screen.blit(self.sprites["target"], (x, y))
             else:
                 pygame.draw.circle(self.screen, (220, 20, 60), rect.center, TILE_SIZE // 4)
 
-        # 4. Thung: Ky tu 'B'
+        # Hop
         elif char == "B":
             if self.sprites.get("box"):
                 self.screen.blit(self.sprites["box"], (x, y))
             else:
                 pygame.draw.rect(self.screen, (205, 133, 63), rect.inflate(-16, -16), border_radius=6)
 
-        # 5. Thung da nam tren dich: Ky tu 'C'
+        # Hop tren dich boi Player 1
         elif char == "C":
             if self.sprites.get("box_docked"):
                 self.screen.blit(self.sprites["box_docked"], (x, y))
@@ -136,7 +131,7 @@ class SokobanView:
             else:
                 pygame.draw.rect(self.screen, (139, 69, 19), rect.inflate(-16, -16), border_radius=6)
 
-        # 6. Nguoi choi 1 dung tren o dich: '+'
+        # Nguoi choi 1 dung tren dich
         elif char == "+":
             if self.sprites.get("target"):
                 self.screen.blit(self.sprites["target"], (x, y))
@@ -145,172 +140,73 @@ class SokobanView:
             else:
                 pygame.draw.circle(self.screen, (30, 144, 255), rect.center, TILE_SIZE // 3)
 
-        # 7. Nguoi choi 1: Ky tu 'A'
+        # Nguoi choi 1
         elif char == "A":
             if self.sprites.get("player"):
                 self.screen.blit(self.sprites["player"], (x, y))
             else:
                 pygame.draw.circle(self.screen, (30, 144, 255), rect.center, TILE_SIZE // 3)
-                
-        # 8. Nguoi choi 2 o che do doi khang: Ky tu 'P'
+
+        # Nguoi choi 2
         elif char == "P":
             if self.sprites.get("player2"):
                 self.screen.blit(self.sprites["player2"], (x, y))
             else:
                 pygame.draw.circle(self.screen, (255, 140, 0), rect.center, TILE_SIZE // 3)
-                
-        # 9. Thung tren dich boi Player 2: Ky tu 'K'
+
+        # Hop tren dich boi Player 2
         elif char == "K":
             if self.sprites.get("box_p2"):
                 self.screen.blit(self.sprites["box_p2"], (x, y))
             else:
                 box_rect = rect.inflate(-14, -14)
-                pygame.draw.rect(
-                    self.screen, (30, 130, 180), box_rect, border_radius=6
-                )
-                pygame.draw.rect(
-                    self.screen, (255, 215, 0), box_rect, 3, border_radius=6
-                )
+                pygame.draw.rect(self.screen, (30, 130, 180), box_rect, border_radius=6)
+                pygame.draw.rect(self.screen, (255, 215, 0), box_rect, 3, border_radius=6)
 
     def draw_panel(self):
+        # Ve bang dieu khien o duoi man hinh
         screen_w = self.screen.get_width()
-        panel_rect = pygame.Rect(
-            0, self.grid_height * TILE_SIZE, screen_w, self.panel_height
-        )
+        panel_rect = pygame.Rect(0, self.grid_height * TILE_SIZE, screen_w, self.panel_height)
         pygame.draw.rect(self.screen, COLOR_PANEL, panel_rect)
-        pygame.draw.line(
-            self.screen,
-            (70, 75, 85),
-            (0, panel_rect.top),
-            (screen_w, panel_rect.top),
-            2,
-        )
+        pygame.draw.line(self.screen, (255, 69, 0), (0, self.grid_height * TILE_SIZE), (screen_w, self.grid_height * TILE_SIZE), 2)
 
-        total_steps = max(0, len(self.history_states) - 1)
+        total_steps = len(self.history_states) - 1
+        status_text = "PAUSED" if self.is_paused else "PLAYING"
+        status_color = (255, 165, 0) if self.is_paused else COLOR_STATUS
 
-        if self.mode == "competitive":
-            # --- CHE DO DOI KHANG 2 AGENT---
-            p1_score = 0
-            p2_score = 0
-            if (
-                self.history_scores
-                and self.current_step < len(self.history_scores)
-            ):
-                p1_score, p2_score = self.history_scores[self.current_step]
-
-            # Hang 1: Diem so 2 ben va So buoc di
-            score_txt = (
-                f"P1 (A): {p1_score} diem   vs   P2 (P): {p2_score} diem"
-            )
-            score_surf = self.font.render(score_txt, True, (0, 220, 255))
-            self.screen.blit(score_surf, (20, panel_rect.top + 8))
-
-            step_surf = self.font.render(
-                f"Buoc: {self.current_step} / {self.max_steps}", True, COLOR_TEXT
-            )
-            self.screen.blit(
-                step_surf,
-                (screen_w - step_surf.get_width() - 20, panel_rect.top + 8),
-            )
-
-            # Hang 2: Trang thai chay hoac Thong bao ket qua thang cuoc
-            if self.current_step >= total_steps and total_steps > 0:
-                if p1_score > p2_score:
-                    res_txt, res_col = (
-                        "KET QUA: PLAYER 1 THANG!",
-                        (50, 255, 120),
-                    )
-                elif p2_score > p1_score:
-                    res_txt, res_col = (
-                        "KET QUA: PLAYER 2 THANG!",
-                        (255, 160, 50),
-                    )
-                else:
-                    res_txt, res_col = "KET QUA: HOA NHAU!", (255, 255, 100)
-                res_surf = self.font.render(res_txt, True, res_col)
-                self.screen.blit(
-                    res_surf,
-                    (
-                        (screen_w - res_surf.get_width()) // 2,
-                        panel_rect.top + 34,
-                    ),
-                )
-            else:
-                status_txt = "PAUSED" if self.is_paused else "PLAYING"
-                status_surf = self.font.render(
-                    f"Trang thai: {status_txt}", True, COLOR_STATUS
-                )
-                self.screen.blit(
-                    status_surf,
-                    (
-                        (screen_w - status_surf.get_width()) // 2,
-                        panel_rect.top + 34,
-                    ),
-                )
-
-            # Hang 3: Huong dan phim
-            guide_txt = "Space: Pause/Resume | [->]: Buoc toi | [<-]: Lui buoc | ESC: Thoat"
-            guide_surf = self.small_font.render(
-                guide_txt, True, (170, 175, 185)
-            )
-            self.screen.blit(
-                guide_surf,
-                ((screen_w - guide_surf.get_width()) // 2, panel_rect.top + 64),
-            )
-
+        # Hien thi theo che do don tac nhan hoac doi khang
+        if self.mode == "single":
+            txt_info = self.font.render(f"Thuat toan: {self.algorithm_name}", True, (0, 191, 255))
+            txt_step = self.font.render(f"Buoc: {self.current_step} / {total_steps}", True, COLOR_TEXT)
+            self.screen.blit(txt_info, (20, self.grid_height * TILE_SIZE + 15))
+            self.screen.blit(txt_step, (screen_w - txt_step.get_width() - 20, self.grid_height * TILE_SIZE + 15))
         else:
-            # --- CHE DO DON ---
-            algo_surf = self.font.render(
-                f"Thuat toan: {self.algorithm_name}", True, (255, 215, 0)
-            )
-            self.screen.blit(algo_surf, (20, panel_rect.top + 10))
+            s1, s2 = 0, 0
+            if self.history_scores and self.current_step < len(self.history_scores):
+                s1, s2 = self.history_scores[self.current_step]
+            txt_scores = self.font.render(f"P1 (A): {s1} diem   vs   P2 (P): {s2} diem", True, (0, 255, 255))
+            txt_step = self.font.render(f"Buoc: {self.current_step} / {self.max_steps}", True, COLOR_TEXT)
+            self.screen.blit(txt_scores, (20, self.grid_height * TILE_SIZE + 15))
+            self.screen.blit(txt_step, (screen_w - txt_step.get_width() - 20, self.grid_height * TILE_SIZE + 15))
 
-            status_txt = "PAUSED" if self.is_paused else "PLAYING"
-            status_surf = self.font.render(
-                f"Trang thai: {status_txt}", True, COLOR_STATUS
-            )
-            self.screen.blit(
-                status_surf,
-                (
-                    (screen_w - status_surf.get_width()) // 2,
-                    panel_rect.top + 10,
-                ),
-            )
+        txt_status = self.font.render(f"Trang thai: {status_text}", True, status_color)
+        self.screen.blit(txt_status, (screen_w // 2 - txt_status.get_width() // 2, self.grid_height * TILE_SIZE + 35))
 
-            step_surf = self.font.render(
-                f"Buoc: {self.current_step} / {total_steps}", True, COLOR_TEXT
-            )
-            self.screen.blit(
-                step_surf,
-                (screen_w - step_surf.get_width() - 20, panel_rect.top + 10),
-            )
+        guide = "Space: Pause/Resume | [->]: Buoc toi | [<-]: Lui buoc | ESC: Thoat"
+        txt_guide = self.small_font.render(guide, True, (160, 160, 160))
+        self.screen.blit(txt_guide, (screen_w // 2 - txt_guide.get_width() // 2, self.grid_height * TILE_SIZE + 68))
 
-            guide_txt = "Space: Pause/Resume | [->]: Buoc toi | [<-]: Lui buoc | ESC: Thoat"
-            guide_surf = self.small_font.render(
-                guide_txt, True, (180, 180, 180)
-            )
-            self.screen.blit(
-                guide_surf,
-                ((screen_w - guide_surf.get_width()) // 2, panel_rect.top + 52),
-            )
-        
-    def render(self, state):
-        self.screen.fill(COLOR_BG)
-        grid = state.grid if hasattr(state, 'grid') else state
-        for r, row in enumerate(grid):
-            for c, char in enumerate(row):
-                self.draw_cell(char, c * TILE_SIZE, r * TILE_SIZE)
-        self.draw_panel()
-        pygame.display.flip()
-
-    def run_interactive(self):
-        if not self.history_states:
-            return
+    def run(self):
+        # Vong lap chinh cua giao dien Pygame
         self.running = True
-        auto_tick = 0
+        step_delay = 350
+        last_step_time = pygame.time.get_ticks()
+
         while self.running:
             self.clock.tick(FPS)
-            auto_tick += 1
+            now = pygame.time.get_ticks()
+
+            # Xu ly su kien ban phim
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -319,20 +215,32 @@ class SokobanView:
                         self.running = False
                     elif event.key == KEY_PAUSE:
                         self.is_paused = not self.is_paused
-                    elif event.key == KEY_FORWARD:
+                    elif event.key == KEY_FORWARD and self.is_paused:
                         if self.current_step < len(self.history_states) - 1:
                             self.current_step += 1
-                    elif event.key == KEY_BACKWARD:
+                    elif event.key == KEY_BACKWARD and self.is_paused:
                         if self.current_step > 0:
                             self.current_step -= 1
 
-            if not self.is_paused and auto_tick >= (FPS // 2):
-                auto_tick = 0
+            # Tu dong chay buoc tiep theo neu khong tam dung
+            if not self.is_paused and now - last_step_time > step_delay:
                 if self.current_step < len(self.history_states) - 1:
                     self.current_step += 1
+                    last_step_time = now
                 else:
                     self.is_paused = True
 
-            current_state = self.history_states[self.current_step]
-            self.render(current_state)
+            self.screen.fill(COLOR_BG)
+
+            # Ve luoi ban do hien tai
+            if self.history_states and self.current_step < len(self.history_states):
+                cur_grid = self.history_states[self.current_step]
+                for r in range(self.grid_height):
+                    for c in range(self.grid_width):
+                        char = cur_grid[r][c] if r < len(cur_grid) and c < len(cur_grid[r]) else " "
+                        self.draw_cell(char, c * TILE_SIZE, r * TILE_SIZE)
+
+            self.draw_panel()
+            pygame.display.flip()
+
         pygame.quit()

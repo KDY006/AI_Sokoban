@@ -1,9 +1,14 @@
+"""
+Module: competitive/agent_player1.py
+Mo ta: Tac nhan Player 1 trong che do doi khang.
+Su dung thuat toan A* tim duong day thung toi dich va kich hoat che do pha binh khi bi dan diem.
+"""
+
 from collections import deque
 import threading
 
 
 class agent_player1:
-
     def __init__(self):
         self.name = "Player 1"
         self.time_limit = 0.85
@@ -37,7 +42,7 @@ class agent_player1:
         return None
 
     def bfs_path(self, grid, start_pos, target_pos, obstacles):
-        """Tìm đường đi ngắn nhất cho Agent từ start_pos tới target_pos né tường & vật cản."""
+        # Tim duong di ngan nhat bang BFS ne tuong va vat can
         if start_pos == target_pos:
             return []
 
@@ -63,82 +68,121 @@ class agent_player1:
 
         return None
 
+    def search_sabotage_act(self, grid, my_pos, opp_box_char="K", opp_char="P"):
+        # Tim ke hoach day hop cua doi thu ra khoi o dich
+        opp_boxes = []
+        all_obstacles = set()
+        for r in range(len(grid)):
+            for c in range(len(grid[r])):
+                ch = grid[r][c]
+                if ch == opp_box_char:
+                    opp_boxes.append((r, c))
+                if ch in ["B", "C", "K", opp_char]:
+                    all_obstacles.add((r, c))
+
+        if not opp_boxes:
+            return None
+
+        best_sabotage_plan = None
+        min_cost = float("inf")
+
+        for box in opp_boxes:
+            br, bc = box
+            for act in ["North", "South", "West", "East"]:
+                nbr, nbc = self.get_next_position(box, act)
+
+                if not (0 <= nbr < len(grid) and 0 <= nbc < len(grid[0])):
+                    continue
+                if grid[nbr][nbc] in ["%", "B", "C", "K", opp_char]:
+                    continue
+
+                push_pos = (br + 1, bc) if act == "North" else ((br - 1, bc) if act == "South" else ((br, bc + 1) if act == "West" else (br, bc - 1)))
+                pr, pc = push_pos
+                if not (0 <= pr < len(grid) and 0 <= pc < len(grid[0])):
+                    continue
+                if grid[pr][pc] in ["%", "B", "C", "K", opp_char]:
+                    continue
+
+                path_to_push = self.bfs_path(grid, my_pos, push_pos, all_obstacles)
+                if path_to_push is not None:
+                    bonus = 0 if (nbr, nbc) not in self.static_goals else 5
+                    cost = len(path_to_push) + bonus
+                    if cost < min_cost:
+                        min_cost = cost
+                        best_sabotage_plan = (path_to_push, act, push_pos, box)
+
+        return best_sabotage_plan
+
     def search_best_act(self, grid, my_pos):
-        # Lưu cố định vị trí các ô đích ban đầu (không bị mất khi Agent bước lên ô đích)
+        # Khoi tao tap o dich co dinh
         if self.static_goals is None:
             self.static_goals = set()
             for r in range(len(grid)):
                 for c in range(len(grid[r])):
-                    if grid[r][c] in ["D", "C", "K", "+"]:
+                    if grid[r][c] in ["D", "C", "K"]:
                         self.static_goals.add((r, c))
 
+        # Tinh diem hien tai va thu thap hop kha dung
+        my_score = 0
+        opp_score = 0
         boxes = []
         all_obstacles = set()
         for r in range(len(grid)):
             for c in range(len(grid[r])):
                 ch = grid[r][c]
+                if ch == "C":
+                    my_score += 1
+                elif ch == "K":
+                    opp_score += 1
+
                 if ch in ["B", "K"]:
                     boxes.append((r, c))
                 if ch in ["B", "C", "K", "P"]:
                     all_obstacles.add((r, c))
 
-        # Chỉ chọn các ô đích thực sự chưa bị hộp (B, C, K) chiếm chỗ (dù Agent có đứng lên hay không)
+        # Loc cac o dich con trong
         free_goals = [
             g for g in self.static_goals
             if grid[g[0]][g[1]] not in ["B", "C", "K"]
         ]
 
-        if not boxes or not free_goals:
-            return "Stay"
-
         best_plan = None
         min_total_cost = float("inf")
 
-        for box in boxes:
-            br, bc = box
-            # Thưởng điểm ưu tiên cướp thùng đối thủ (K)
-            steal_bonus = -8 if grid[br][bc] == "K" else 0
+        # 1. Tim duong day hop vao o dich trong neu co
+        if boxes and free_goals:
+            for box in boxes:
+                br, bc = box
+                steal_bonus = -8 if grid[br][bc] == "K" else 0
 
-            for goal in free_goals:
-                gr, gc = goal
-                if goal == box:
-                    continue
-
-                for act in ["North", "South", "West", "East"]:
-                    next_box_pos = self.get_next_position(box, act)
-                    nbr, nbc = next_box_pos
-
-                    # Ô sau khi đẩy hộp phải trống hoặc là đích (không được là tường hoặc hộp khác)
-                    if not (0 <= nbr < len(grid) and 0 <= nbc < len(grid[0])):
-                        continue
-                    if grid[nbr][nbc] in ["%", "B", "C", "K", "P"]:
+                for goal in free_goals:
+                    gr, gc = goal
+                    if goal == box:
                         continue
 
-                    push_pos = None
-                    if act == "North":
-                        push_pos = (br + 1, bc)
-                    elif act == "South":
-                        push_pos = (br - 1, bc)
-                    elif act == "West":
-                        push_pos = (br, bc + 1)
-                    elif act == "East":
-                        push_pos = (br, bc - 1)
+                    for act in ["North", "South", "West", "East"]:
+                        next_box_pos = self.get_next_position(box, act)
+                        nbr, nbc = next_box_pos
 
-                    pr, pc = push_pos
-                    if not (0 <= pr < len(grid) and 0 <= pc < len(grid[0])):
-                        continue
-                    if grid[pr][pc] in ["%", "B", "C", "K"]:
-                        continue
+                        if not (0 <= nbr < len(grid) and 0 <= nbc < len(grid[0])):
+                            continue
+                        if grid[nbr][nbc] in ["%", "B", "C", "K", "P"]:
+                            continue
 
-                    # Đường đi của Agent tới ô đẩy phải tránh tất cả các hộp và đối thủ
-                    path_to_push = self.bfs_path(grid, my_pos, push_pos, all_obstacles)
-                    if path_to_push is not None:
-                        # Hàm đánh giá A*: Chi phí đi tới ô đẩy + Ước lượng khoảng cách hộp tới đích
-                        h_cost = (abs(nbr - gr) + abs(nbc - gc)) * 2
-                        cost = len(path_to_push) + h_cost + steal_bonus
-                        if cost < min_total_cost:
-                            min_total_cost = cost
-                            best_plan = (path_to_push, act, push_pos, box)
+                        push_pos = (br + 1, bc) if act == "North" else ((br - 1, bc) if act == "South" else ((br, bc + 1) if act == "West" else (br, bc - 1)))
+                        pr, pc = push_pos
+                        if not (0 <= pr < len(grid) and 0 <= pc < len(grid[0])):
+                            continue
+                        if grid[pr][pc] in ["%", "B", "C", "K"]:
+                            continue
+
+                        path_to_push = self.bfs_path(grid, my_pos, push_pos, all_obstacles)
+                        if path_to_push is not None:
+                            h_cost = (abs(nbr - gr) + abs(nbc - gc)) * 2
+                            cost = len(path_to_push) + h_cost + steal_bonus
+                            if cost < min_total_cost:
+                                min_total_cost = cost
+                                best_plan = (path_to_push, act, push_pos, box)
 
         if best_plan is not None:
             path_to_push, push_act, push_pos, target_box = best_plan
@@ -146,13 +190,25 @@ class agent_player1:
                 if len(path_to_push) > 0:
                     return path_to_push[0]
             else:
-                # Đang đứng tại ô đẩy -> Thực hiện đẩy hộp theo hướng chính xác
                 push_dir = self.get_push_direction(my_pos, target_box)
                 return push_dir if push_dir else push_act
+
+        # 2. Kich hoat che do pha binh khi khong con o dich trong hoac bi dan diem
+        if my_score <= opp_score:
+            sabotage_plan = self.search_sabotage_act(grid, my_pos, opp_box_char="K", opp_char="P")
+            if sabotage_plan is not None:
+                path_to_push, push_act, push_pos, target_box = sabotage_plan
+                if my_pos != push_pos:
+                    if len(path_to_push) > 0:
+                        return path_to_push[0]
+                else:
+                    push_dir = self.get_push_direction(my_pos, target_box)
+                    return push_dir if push_dir else push_act
 
         return "Stay"
 
     def get_act(self, grid, my_pos):
+        # Gioi han thoi gian xu ly bang threading
         result = ["Stay"]
 
         def worker():
