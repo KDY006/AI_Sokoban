@@ -144,15 +144,15 @@ def main():
 
     # Kiem tra cac truong hop bat kha thi ban dau
     if num_goals == 0:
-        print("[!] Ban do khong co o dich. Ket thuc an toan.")
+        print("[!] Ban do khong co o dich. Loi ban do, khong the giai duoc.")
         return
 
     if num_boxes == 0:
-        print("[!] Ban do khong co hop. Ket thuc an toan.")
+        print("[!] Ban do khong co hop. Loi ban do, khong the giai duoc.")
         return
 
     if num_boxes < num_goals:
-        print(f"[!] So hop ({num_boxes}) it hon so o dich ({num_goals}). Ket thuc an toan.")
+        print(f"[!] So hop ({num_boxes}) it hon so o dich ({num_goals}). Loi ban do, khong the giai duoc.")
         return
 
     if num_boxes > num_goals:
@@ -173,7 +173,7 @@ def main():
     print("                    KET QUA TIM KIEM")
     print("-" * 65)
     if actions is None:
-        print("[!] Khong tim thay loi giai. Ket thuc an toan.")
+        print("[!] Khong tim thay loi giai. Ket thuc tro choi.")
         print(f"  - So node da mo rong:    {stats.get('expanded_nodes', 0):,}")
         print(f"  - Bo nho Frontier dinh:  {stats.get('max_frontier_size', 0):,}")
         print(f"  - Thoi gian chay:        {stats.get('time_ms', 0):.2f} ms")
