@@ -1,5 +1,4 @@
-Map,h_start,h_star,Admissibility,Transitions_Tested,Max_Delta_h,Consistency
-example_map.txt,8.0,34,PASS,2001,1.0,PASS
+﻿Map,h_start,h_star,Admissibility,Transitions_Tested,Max_Delta_h,Consistency
+map_01_one_box.txt,2.0,4,PASS,520,1.0,PASS
 map_02_two_boxes.txt,3.0,7,PASS,2001,1.0,PASS
 map_03_three_boxes.txt,7.0,14,PASS,2001,1.0,PASS
-map_04_four_boxes.txt,12.0,23,PASS,2001,1.0,PASS

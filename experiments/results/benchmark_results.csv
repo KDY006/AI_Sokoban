@@ -1,5 +1,6 @@
-Map,Goals,UCS_Cost,AStar_Cost,UCS_Nodes,AStar_Nodes,UCS_Frontier,AStar_Frontier,UCS_Time_ms,AStar_Time_ms
-map_deadlock.txt,1,Unsolvable,Unsolvable,7,0,3,0,0.22,0.15
-map_02_two_boxes.txt,2,7,7,327,33,243,40,4.31,1.65
-map_03_three_boxes.txt,3,14,14,36164,878,16890,852,580.24,52.59
-map_04_four_boxes.txt,4,23,23,2789819,22606,632276,20310,70062.24,2261.67
+﻿Map,Goals,UCS_Cost,AStar_Cost,UCS_Nodes,AStar_Nodes,UCS_Frontier,AStar_Frontier,UCS_Time_ms,AStar_Time_ms
+map_deadlock.txt,1,Khong loi giai,Khong loi giai,7,0,3,0,0.12,0.06
+map_01_one_box.txt,1,4,4,26,7,16,9,0.26,0.51
+map_02_two_boxes.txt,2,7,7,327,33,243,40,3.37,1.93
+map_03_three_boxes.txt,3,14,14,36164,878,16890,852,587.77,55.71
+map_04_four_boxes.txt,4,23,23,2789819,22606,632276,20310,57570.36,1881.65
