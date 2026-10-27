@@ -39,7 +39,7 @@ class SokobanView:
     def _load_sprites(self):
         # Nap bo anh tu thu muc gui/assets
         assets_dir = os.path.join(os.path.dirname(__file__), "assets")
-        elements = ["player", "player2", "box", "box_docked", "box_p2", "target", "wall", "floor"]
+        elements = ["player1", "player2", "player", "box", "box_p1", "box_p2", "target", "wall", "floor"]
         for elem in elements:
             path = os.path.join(assets_dir, f"{elem}.png")
             if os.path.exists(path):
@@ -122,10 +122,10 @@ class SokobanView:
             else:
                 pygame.draw.rect(self.screen, (205, 133, 63), rect.inflate(-16, -16), border_radius=6)
 
-        # Hop tren dich boi Player 1
+        # Hop tren dich boi Player 1 (hoac che do don tac nhan)
         elif char == "C":
-            if self.sprites.get("box_docked"):
-                self.screen.blit(self.sprites["box_docked"], (x, y))
+            if self.sprites.get("box_p1"):
+                self.screen.blit(self.sprites["box_p1"], (x, y))
             elif self.sprites.get("box"):
                 self.screen.blit(self.sprites["box"], (x, y))
             else:
@@ -135,15 +135,17 @@ class SokobanView:
         elif char == "+":
             if self.sprites.get("target"):
                 self.screen.blit(self.sprites["target"], (x, y))
-            if self.sprites.get("player"):
-                self.screen.blit(self.sprites["player"], (x, y))
+            p1_sprite = self.sprites.get("player1") or self.sprites.get("player")
+            if p1_sprite:
+                self.screen.blit(p1_sprite, (x, y))
             else:
                 pygame.draw.circle(self.screen, (30, 144, 255), rect.center, TILE_SIZE // 3)
 
         # Nguoi choi 1
         elif char == "A":
-            if self.sprites.get("player"):
-                self.screen.blit(self.sprites["player"], (x, y))
+            p1_sprite = self.sprites.get("player1") or self.sprites.get("player")
+            if p1_sprite:
+                self.screen.blit(p1_sprite, (x, y))
             else:
                 pygame.draw.circle(self.screen, (30, 144, 255), rect.center, TILE_SIZE // 3)
 
