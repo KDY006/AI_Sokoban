@@ -126,6 +126,7 @@ class agent_player2:
         my_score = 0
         opp_score = 0
         boxes = []
+        free_boxes = []
         all_obstacles = set()
         for r in range(len(grid)):
             for c in range(len(grid[r])):
@@ -135,6 +136,8 @@ class agent_player2:
                 elif ch == "C":
                     opp_score += 1
 
+                if ch == "B":
+                    free_boxes.append((r, c))
                 if ch in ["B", "C"]:
                     boxes.append((r, c))
                 if ch in ["B", "C", "K", "A"]:
@@ -192,8 +195,8 @@ class agent_player2:
                 push_dir = self.get_push_direction(my_pos, target_box)
                 return push_dir if push_dir else push_act
 
-        # 2. Kich hoat che do pha binh khi het dich trong hoac bi dan diem
-        if my_score <= opp_score:
+        # 2. Chi khi het thung tu do va bi dan diem hoac bang diem moi kich hoat pha binh
+        if len(free_boxes) == 0 and my_score <= opp_score:
             sabotage_plan = self.search_sabotage_act(grid, my_pos, opp_box_char="C", opp_char="A")
             if sabotage_plan is not None:
                 path_to_push, push_act, push_pos, target_box = sabotage_plan
